@@ -122,7 +122,7 @@ class RoomParent(DefaultRoom):
             # Display Exits
             if exit_strings:
                 string += divider("Exits", width=78, fillchar=ANSIString("|r-|n")) + "\n"
-                string += self.format_exit_columns(exit_strings)
+                string += self.format_exit_columns(exit_strings) + "\n"
 
         # Get room type and resources
         room_type = self.db.roomtype or "Unknown"
@@ -134,7 +134,7 @@ class RoomParent(DefaultRoom):
         footer_length = len(ANSIString(footer_text))
         padding = 78 - footer_length - 2  # -2 for the brackets
 
-        string += ANSIString(f"|r{'-' * padding}[|y{footer_text}|r]|n")
+        string += ANSIString(f"|r{'-' * padding}[|c{footer_text}|r]|n")
 
         return string
 
