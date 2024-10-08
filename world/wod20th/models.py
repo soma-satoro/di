@@ -79,8 +79,6 @@ class Stat(models.Model):
     # add a field for the default value of the stat
     default = models.CharField(max_length=100, blank=True, null=True, default=None)
 
-
-    
     def __str__(self):
         return self.name
 
@@ -123,3 +121,7 @@ class Note(SharedMemoryModel):
 
     class Meta:
         unique_together = ('character', 'name')
+
+def calculate_willpower(character):
+    courage = character.db.stats.get("Courage", 1)  # Default to 1 if not set
+    return courage

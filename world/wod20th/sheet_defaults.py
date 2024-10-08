@@ -661,3 +661,31 @@ PATHS_OF_ENLIGHTENMENT = {
     "path_of_paradox": "Path of Paradox",
     "path_of_the_hive": "Path of the Hive"
 }
+
+ATTRIBUTES = {
+    "Strength": 1,
+    "Dexterity": 1,
+    "Stamina": 1,
+    "Charisma": 1,
+    "Manipulation": 1,
+    "Appearance": 1,
+    "Perception": 1,
+    "Intelligence": 1,
+    "Wits": 1
+}
+
+ABILITIES = {
+    "Talents": TALENTS,
+    "Skills": SKILLS,
+    "Knowledges": KNOWLEDGES
+}
+
+ADVANTAGES = {
+    "Backgrounds": BACKGROUNDS,
+    "Virtues": {
+        "Conscience": 1,
+        "Self-Control": 1,
+        "Courage": 1
+    },
+    "Willpower": 1
+}
