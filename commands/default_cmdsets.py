@@ -31,6 +31,7 @@ from commands.CmdNotes import CmdNotes
 from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.building import CmdSetRoomResources, CmdSetRoomType
 from commands.requests import CmdRequests
+
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -69,6 +70,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdSetRoomResources())
         self.add(CmdSetRoomType())
         self.add(CmdRequests())
+        
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is
