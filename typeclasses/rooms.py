@@ -1,7 +1,9 @@
 from evennia import DefaultRoom
+from evennia.utils.utils import make_iter
 from evennia.utils.ansi import ANSIString
 from world.wod20th.utils.ansi_utils import wrap_ansi
 from world.wod20th.utils.formatting import header, footer, divider
+import random
 
 class RoomParent(DefaultRoom):
 
@@ -29,10 +31,17 @@ class RoomParent(DefaultRoom):
             return ""
 
         name = self.get_display_name(looker, **kwargs)
-        desc = self.db.desc
+        
+        # Check if the looker is in the Umbra
+        in_umbra = looker.tags.get("in_umbra", category="state")
+        
+        # Choose the appropriate description
+        if in_umbra and self.db.umbra_desc:
+            desc = self.db.umbra_desc
+        else:
+            desc = self.db.desc
 
         # Header with room name
-        
         string = header(name, width=78, bcolor="|r", fillchar=ANSIString("|r-|n")) + "\n"
         
         # Process room description
@@ -58,7 +67,11 @@ class RoomParent(DefaultRoom):
             string += '\n'.join(formatted_paragraphs) + "\n\n"
 
         # List all characters in the room
-        characters = [obj for obj in self.contents if obj.has_account]
+        characters = [
+            obj for obj in self.contents 
+            if obj.has_account and obj != looker and 
+            obj.tags.get("in_umbra", category="state") == looker.tags.get("in_umbra", category="state")
+        ]
         if characters:
             string += divider("Characters", width=78, fillchar=ANSIString("|r-|n")) + "\n"
             for character in characters:
@@ -179,3 +192,103 @@ class RoomParent(DefaultRoom):
         
 
         return f"{color}{time_str}|n"
+
+    def get_gauntlet_difficulty(self):
+        """
+        Returns the Gauntlet difficulty for this room.
+        Override this method to set custom difficulties for specific rooms.
+        """
+        return self.db.gauntlet_difficulty or 6  # Default difficulty
+
+    def peek_umbra(self, character):
+        """
+        Allows a character to peek into the Umbra.
+        """
+        difficulty = self.get_gauntlet_difficulty() + 2
+        success = self.roll_gnosis(character, difficulty)
+        
+        if success:
+            return self.return_appearance(character, peek_umbra=True)
+        else:
+            return "You fail to pierce the Gauntlet and see into the Umbra."
+
+    def msg_contents(self, text=None, exclude=None, from_obj=None, mapping=None, **kwargs):
+        """
+        Send a message to all objects inside the room, excluding the sender and those in a different plane.
+        """
+        contents = self.contents
+        if exclude:
+            exclude = make_iter(exclude)
+            contents = [obj for obj in contents if obj not in exclude]
+
+        for obj in contents:
+            if hasattr(obj, 'is_character') and obj.is_character:
+                # Check if the character is in the same plane (Umbra or material)
+                if from_obj and hasattr(from_obj, 'tags'):
+                    sender_in_umbra = from_obj.tags.get("in_umbra", category="state")
+                    receiver_in_umbra = obj.tags.get("in_umbra", category="state")
+                    
+                    if sender_in_umbra != receiver_in_umbra:
+                        continue  # Skip this character if they're in a different plane
+
+            obj.msg(text=text, from_obj=from_obj, mapping=mapping, **kwargs)
+
+    def step_sideways(self, character):
+        """
+        Allows a character to step sideways into the Umbra.
+        """
+        difficulty = self.get_gauntlet_difficulty()
+        success = self.roll_gnosis(character, difficulty)
+        
+        if success:
+            character.tags.remove("in_material", category="state")
+            character.tags.add("in_umbra", category="state")
+            character.msg("You successfully step sideways into the Umbra.")
+            self.msg_contents(f"{character.name} shimmers and fades from view as they step into the Umbra.", exclude=character, from_obj=character)
+            return True
+        else:
+            character.msg("You fail to step sideways into the Umbra.")
+            return False
+
+    def return_from_umbra(self, character):
+        """
+        Allows a character to return from the Umbra to the material world.
+        """
+        character.tags.remove("in_umbra", category="state")
+        character.tags.add("in_material", category="state")
+        character.msg("You step back into the material world.")
+        self.msg_contents(f"{character.name} shimmers into view as they return from the Umbra.", exclude=character, from_obj=character)
+        return True
+
+    def roll_gnosis(self, character, difficulty):
+        """
+        Simulates a Gnosis roll for the character.
+        This is a placeholder and should be replaced with your game's actual dice rolling mechanism.
+        """
+        stats = character.db.stats
+        if not stats or 'pools' not in stats or 'temporary' not in stats['pools'] or 'Gnosis' not in stats['pools']['temporary']:
+            character.msg("Error: Gnosis attribute not found. Please contact an admin.")
+            return False
+        
+        gnosis = stats['pools']['temporary']['Gnosis']['perm']
+        if gnosis is None:
+            character.msg("Error: Permanent Gnosis value is None. Please contact an admin.")
+            return False
+        
+        # Convert gnosis to an integer if it's stored as a string
+        if isinstance(gnosis, str):
+            try:
+                gnosis = int(gnosis)
+            except ValueError:
+                character.msg("Error: Invalid Gnosis value. Please contact an admin.")
+                return False
+        
+        # Placeholder: Simulate rolling Gnosis dice against difficulty
+        successes = 0
+        for _ in range(gnosis):
+            roll = random.randint(1, 10)
+            if roll >= difficulty:
+                successes += 1
+        
+        character.msg(f"Gnosis Roll: {successes} successes against difficulty {difficulty}")
+        return successes > 0

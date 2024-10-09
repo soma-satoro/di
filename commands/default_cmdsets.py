@@ -29,8 +29,9 @@ from commands.CmdSay import CmdSay
 from commands.CmdEmit import CmdEmit
 from commands.CmdNotes import CmdNotes
 from commands.bbs.bbs_cmdset import BBSCmdSet
-from commands.building import CmdSetRoomResources, CmdSetRoomType
+from commands.building import CmdSetRoomResources, CmdSetRoomType, CmdSetUmbraDesc, CmdSetGauntlet, CmdUmbraInfo
 from commands.requests import CmdRequests
+from commands.CmdUmbraInteraction import CmdUmbraInteraction
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -63,14 +64,10 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(mail.CmdMail())
         self.add(mail.CmdMailCharacter())
         self.add(CmdRoll())
-        self.add(CmdLanguage())
-        self.add(CmdSay())
-        self.add(CmdNotes())
 
-        self.add(CmdSetRoomResources())
-        self.add(CmdSetRoomType())
-        self.add(CmdRequests())
-        
+
+        self.add(CmdUmbraInteraction())
+
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is
@@ -89,7 +86,15 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         #
         # any commands you add below will overload the default ones.
         #
-
+        self.add(CmdSetRoomResources())
+        self.add(CmdSetRoomType())
+        self.add(CmdSetUmbraDesc())
+        self.add(CmdSetGauntlet())
+        self.add(CmdUmbraInfo())
+        self.add(CmdLanguage())
+        self.add(CmdSay())
+        self.add(CmdNotes())
+        self.add(CmdRequests())
 
 class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
     """

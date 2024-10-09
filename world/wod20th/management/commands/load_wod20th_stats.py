@@ -2,7 +2,7 @@ import json
 import os
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ValidationError
-from django.db import connection
+from django.db import connection, IntegrityError
 
 # Import Evennia and initialize it
 import evennia
@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.NOTICE(f'Processing file: {file_path}'))
                 
                 try:
-                    with open(file_path, 'r') as file:
+                    with open(file_path, 'r', encoding='utf-8') as file:
                         stats_data = json.load(file)
                         self.stdout.write(self.style.SUCCESS(f'Successfully loaded JSON data from {file_path}'))
                 except FileNotFoundError:
@@ -44,6 +44,9 @@ class Command(BaseCommand):
                     continue
                 except json.JSONDecodeError:
                     self.stdout.write(self.style.ERROR(f'Error decoding JSON from file {file_path}.'))
+                    continue
+                except UnicodeDecodeError as e:
+                    self.stdout.write(self.style.ERROR(f'Error reading file {filename}: {str(e)}. This file might not be UTF-8 encoded.'))
                     continue
                 
                 for stat_data in stats_data:
@@ -106,6 +109,8 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.SUCCESS(f'Successfully created stat: {stat.name}'))
                     except ValidationError as e:
                         self.stdout.write(self.style.ERROR(f'Validation error for stat {stat.name}: {e}'))
+                    except IntegrityError:
+                        self.stdout.write(self.style.ERROR(f'IntegrityError: Could not create stat {name}. It might already exist.'))
                     except Exception as e:
                         self.stdout.write(self.style.ERROR(f'Error saving stat {stat.name}: {e}'))
                         self.stdout.write(self.style.ERROR(f'Stat object: {stat.__dict__}'))

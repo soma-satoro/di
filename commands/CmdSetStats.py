@@ -1,7 +1,6 @@
 from evennia import default_cmds
 from world.wod20th.models import Stat
 from evennia.locks.lockhandler import LockHandler
-from world.wod20th.utils.stat_utils import initialize_basic_stats
 
 class CmdStats(default_cmds.MuxCommand):
     """
@@ -196,8 +195,11 @@ class CmdStats(default_cmds.MuxCommand):
         self.caller.msg(f"|gUpdated {character.name}'s {full_stat_name} to {new_value}.|n")
         character.msg(f"|y{self.caller.name}|n |gupdated your|n '|y{full_stat_name}|n' |gto|n '|y{new_value}|n'.")
 
+
+
 from evennia.commands.default.muxcommand import MuxCommand
 from world.wod20th.models import Stat
+from evennia.utils import search
 
 class CmdSpecialty(MuxCommand):
     """
@@ -215,31 +217,35 @@ class CmdSpecialty(MuxCommand):
     locks = "cmd:perm(Builder)"  # Only Builders and above can use this command
     help_category = "Chargen & Character Info"
 
-    def func(self):
-        if not self.args:
-            self.caller.msg("Usage: +stats/specialty <character>/<stat>=<specialty>")
-            return
+    def parse(self):
+        """
+        Parse the arguments.
+        """
+        self.character_name = ""
+        self.stat_name = ""
+        self.specialty = ""
 
         try:
-            first_part, self.specialty = self.args.split('=', 1)
-            self.character_name, self.stat_name = first_part.split('/', 1)
+            args = self.args.strip()
+            first_part, self.specialty = args.split('=', 1)
+
+            if '/' in first_part:
+                self.character_name, self.stat_name = first_part.split('/', 1)
+            else:
+                self.character_name = first_part
+
+            self.character_name = self.character_name.strip()
+            self.stat_name = self.stat_name.strip()
+            self.specialty = self.specialty.strip()
+
         except ValueError:
-            self.caller.msg("Invalid input. Use format: <character>/<stat>=<specialty>")
-            return
+            self.character_name = self.stat_name = self.specialty = None
 
-        self.character_name = self.character_name.strip()
-        self.stat_name = self.stat_name.strip()
-        self.specialty = self.specialty.strip()
+    def func(self):
+        """Implement the command"""
 
-        # Check if the stat exists, if not, initialize basic stats
-        if not Stat.objects.filter(name__iexact=self.stat_name).exists():
-            initialize_basic_stats()
-
-        # Try to get the stat again
-        try:
-            stat = Stat.objects.get(name__iexact=self.stat_name)
-        except Stat.DoesNotExist:
-            self.caller.msg(f"No stats matching '{self.stat_name}' found in the database.")
+        if not self.character_name or not self.stat_name or not self.specialty:
+            self.caller.msg("|rUsage: +stats/specialty <character>/<stat>=<specialty>|n")
             return
 
         if self.character_name.lower().strip() == 'me':
@@ -251,11 +257,29 @@ class CmdSpecialty(MuxCommand):
             self.caller.msg(f"|rCharacter '{self.character_name}' not found.|n")
             return
 
+        # Fetch the stat definition from the database
+        try:
+            matching_stats = Stat.objects.filter(name__icontains=self.stat_name.strip())
+        except Exception as e:
+            self.caller.msg(f"|rError fetching stats: {e}|n")
+            return
+
+        if not matching_stats.exists():
+            self.caller.msg(f"|rNo stats matching '{self.stat_name}' found in the database.|n")
+            return
+
+        if len(matching_stats) > 1:
+            self.caller.msg(f"|rMultiple stats matching '{self.stat_name}' found: {[stat.name for stat in matching_stats]}. Please be more specific.|n")
+            return
+
+        stat = matching_stats.first()
+        stat_name = stat.name
+
         specialties = character.db.specialties or {}
-        if not specialties.get(stat.name):
-            specialties[stat.name] = []
-        specialties[stat.name].append(self.specialty)
+        if not specialties.get(stat_name):
+            specialties[stat_name] = []
+        specialties[stat_name].append(self.specialty)
         character.db.specialties = specialties
 
-        self.caller.msg(f"|gAdded specialty '{self.specialty}' to {character.name}'s {stat.name}.|n")
-        character.msg(f"|y{self.caller.name}|n |gadded the specialty|n '|y{self.specialty}|n' |gto your {stat.name}.|n")
+        self.caller.msg(f"|gAdded specialty '{self.specialty}' to {character.name}'s {stat_name}.|n")
+        character.msg(f"|y{self.caller.name}|n |gadded the specialty|n '|y{self.specialty}|n' |gto your {stat_name}.|n")

@@ -11,6 +11,13 @@ class Character(DefaultCharacter):
     The Character typeclass.
     """
 
+    def at_object_creation(self):
+        """
+        Called when the character is first created.
+        """
+        super().at_object_creation()
+        self.tags.add("in_material", category="state")
+
     @lazy_property
     def notes(self):
         return Note.objects.filter(character=self)
@@ -199,15 +206,69 @@ class Character(DefaultCharacter):
 
         return msg_self, msg_understand, msg_not_understand, language
 
+    def step_sideways(self):
+        """
+        Attempt to step sideways into the Umbra.
+        """
+        if self.tags.get("in_umbra", category="state"):
+            self.msg("You are already in the Umbra.")
+            return False
+        
+        if self.location:
+            return self.location.step_sideways(self)
+        else:
+            self.msg("You can't step sideways here.")
+            return False
 
+    def return_from_umbra(self):
+        """
+        Return from the Umbra to the material world.
+        """
+        if not self.tags.get("in_umbra", category="state"):
+            self.msg("You are not in the Umbra.")
+            return False
+        
+        self.tags.remove("in_umbra", category="state")
+        self.msg("You step back into the material world.")
+        self.location.msg_contents(f"{self.name} shimmers into view as they return from the Umbra.", exclude=self, from_obj=self)
+        return True
+
+    def announce_move_from(self, destination, msg=None, mapping=None, **kwargs):
+        """
+        Called just before moving out of the current room.
+        """
+        if not self.location:
+            return
+
+        string = f"{self.name} is leaving {self.location}, heading for {destination}."
+        
+        # Send message directly to the room
+        self.location.msg_contents(string, exclude=[self], from_obj=self)
+
+    def announce_move_to(self, source_location, msg=None, mapping=None, **kwargs):
+        """
+        Called just after arriving in a new room.
+        """
+        if not source_location:
+            return
+
+        string = f"{self.name} arrives to {self.location} from {source_location}."
+        
+        # Send message directly to the room
+        self.location.msg_contents(string, exclude=[self], from_obj=self)
 
     def at_say(self, message, msg_self=None, msg_location=None, receivers=None, msg_receivers=None, **kwargs):
         """
         Hook method for the say command. This method is called by the say command,
         but doesn't handle the actual message distribution.
         """
-        # This method can be empty or contain any additional logic you want to run when a character speaks
-        pass
+        # Filter receivers based on Umbra status
+        in_umbra = self.tags.get("in_umbra", category="state")
+        filtered_receivers = [r for r in receivers if r.tags.get("in_umbra", category="state") == in_umbra]
+        
+        # Call the parent method with filtered receivers
+        super().at_say(message, msg_self=msg_self, msg_location=msg_location, 
+                       receivers=filtered_receivers, msg_receivers=msg_receivers, **kwargs)
 
     def at_pose(self, message, msg_self=None, msg_location=None, receivers=None, msg_receivers=None, **kwargs):
         """
@@ -246,27 +307,15 @@ class Character(DefaultCharacter):
             else:
                 receiver.msg(msg_self)
 
-
     def at_emote(self, emote, msg_self=None, msg_location=None, receivers=None, msg_receivers=None, **kwargs):
         """
-        Override the default emote method to use the gradient name and language masking.
+        Override the default emote method to filter receivers based on Umbra status.
         """
-        if not self.location:
-            return
-
-        masked_emote = re.sub(r'"([^"]*)"', lambda m: f'"{self.mask_language(m.group(1))}"', emote)
-
-        if msg_self is None:
-            msg_self = f"You emote: {masked_emote}"
-        if msg_location is None:
-            if self.db.gradient_name:
-                gradient_name = ANSIString(self.db.gradient_name)
-                msg_location = f"{gradient_name} {masked_emote}"
-            else:
-                msg_location = f"{self.name} {masked_emote}"
-
-        super().at_emote(masked_emote, msg_self=msg_self, msg_location=msg_location, 
-                         receivers=receivers, msg_receivers=msg_receivers, **kwargs)
+        in_umbra = self.tags.get("in_umbra", category="state")
+        filtered_receivers = [r for r in receivers if r.tags.get("in_umbra", category="state") == in_umbra]
+        
+        super().at_emote(emote, msg_self=msg_self, msg_location=msg_location, 
+                         receivers=filtered_receivers, msg_receivers=msg_receivers, **kwargs)
 
     def get_stat(self, category, stat_type, stat_name, temp=False):
         """
