@@ -1,6 +1,7 @@
 from evennia import DefaultRoom
 from evennia.utils.utils import make_iter
 from evennia.utils.ansi import ANSIString
+from evennia.utils.search import search_channel
 from world.wod20th.utils.ansi_utils import wrap_ansi
 from world.wod20th.utils.formatting import header, footer, divider
 import random
@@ -32,11 +33,12 @@ class RoomParent(DefaultRoom):
 
         name = self.get_display_name(looker, **kwargs)
         
-        # Check if the looker is in the Umbra
+        # Check if the looker is in the Umbra or peeking into it
         in_umbra = looker.tags.get("in_umbra", category="state")
+        peeking_umbra = kwargs.get("peek_umbra", False)
         
         # Choose the appropriate description
-        if in_umbra and self.db.umbra_desc:
+        if (in_umbra or peeking_umbra) and self.db.umbra_desc:
             desc = self.db.umbra_desc
         else:
             desc = self.db.desc
@@ -208,9 +210,41 @@ class RoomParent(DefaultRoom):
         success = self.roll_gnosis(character, difficulty)
         
         if success:
-            return self.return_appearance(character, peek_umbra=True)
+            if self.db.umbra_desc:
+                # Format the Umbra description
+                umbra_header = header("Umbra Vision", width=78, fillchar=ANSIString("|r-|n"))
+                formatted_desc = self.format_description(self.db.umbra_desc)
+                umbra_footer = footer(width=78, fillchar=ANSIString("|r-|n"))
+                
+                return f"You successfully pierce the Gauntlet and glimpse into the Umbra:\n\n{umbra_header}\n{formatted_desc}\n{umbra_footer}"
+            else:
+                return "You successfully pierce the Gauntlet, but there's nothing unusual to see in the Umbra here."
         else:
             return "You fail to pierce the Gauntlet and see into the Umbra."
+
+    def format_description(self, desc):
+        """
+        Format the description with proper paragraph handling and indentation.
+        """
+        paragraphs = desc.split('%r')
+        formatted_paragraphs = []
+        for i, p in enumerate(paragraphs):
+            if not p.strip():
+                if i > 0 and not paragraphs[i-1].strip():
+                    formatted_paragraphs.append('')  # Add blank line for double %r
+                continue
+            
+            lines = p.split('%t')
+            formatted_lines = []
+            for j, line in enumerate(lines):
+                if j == 0 and line.strip():
+                    formatted_lines.append(wrap_ansi(line.strip(), width=76))
+                elif line.strip():
+                    formatted_lines.append(wrap_ansi('    ' + line.strip(), width=76))
+            
+            formatted_paragraphs.append('\n'.join(formatted_lines))
+        
+        return '\n\n'.join(formatted_paragraphs)
 
     def msg_contents(self, text=None, exclude=None, from_obj=None, mapping=None, **kwargs):
         """
@@ -238,14 +272,25 @@ class RoomParent(DefaultRoom):
         Allows a character to step sideways into the Umbra.
         """
         difficulty = self.get_gauntlet_difficulty()
-        success = self.roll_gnosis(character, difficulty)
+        successes, ones = self.roll_gnosis(character, difficulty)
         
-        if success:
+        if successes > 0:
             character.tags.remove("in_material", category="state")
             character.tags.add("in_umbra", category="state")
             character.msg("You successfully step sideways into the Umbra.")
             self.msg_contents(f"{character.name} shimmers and fades from view as they step into the Umbra.", exclude=character, from_obj=character)
             return True
+        elif successes == 0 and ones > 0:
+            # Botch
+            character.msg("You catastrophically fail to step sideways into the Umbra.")
+            self.msg_contents(f"{character.name} seems to flicker for a moment, but remains in place.", exclude=character, from_obj=character)
+            
+            # Announce the botch on the mudinfo channel
+            mudinfo = search_channel("mudinfo")
+            if mudinfo:
+                mudinfo[0].msg(f"|rBOTCH!!!|n {character.name} botched their attempt to step sideways in {self.name}.")
+            
+            return False
         else:
             character.msg("You fail to step sideways into the Umbra.")
             return False
@@ -254,26 +299,43 @@ class RoomParent(DefaultRoom):
         """
         Allows a character to return from the Umbra to the material world.
         """
-        character.tags.remove("in_umbra", category="state")
-        character.tags.add("in_material", category="state")
-        character.msg("You step back into the material world.")
-        self.msg_contents(f"{character.name} shimmers into view as they return from the Umbra.", exclude=character, from_obj=character)
-        return True
+        difficulty = self.get_gauntlet_difficulty()
+        successes, ones = self.roll_gnosis(character, difficulty)
+        
+        if successes > 0:
+            character.tags.remove("in_umbra", category="state")
+            character.tags.add("in_material", category="state")
+            character.msg("You step back into the material world.")
+            self.msg_contents(f"{character.name} shimmers into view as they return from the Umbra.", exclude=character, from_obj=character)
+            return True
+        elif successes == 0 and ones > 0:
+            # Botch
+            character.msg("You catastrophically fail to return from the Umbra.")
+            
+            # Announce the botch on the mudinfo channel
+            mudinfo = search_channel("mudinfo")
+            if mudinfo:
+                mudinfo[0].msg(f"|rBOTCH!!!|n {character.name} botched their attempt to return from the Umbra in {self.name}.")
+            
+            return False
+        else:
+            character.msg("You fail to return from the Umbra.")
+            return False
 
     def roll_gnosis(self, character, difficulty):
         """
         Simulates a Gnosis roll for the character.
-        This is a placeholder and should be replaced with your game's actual dice rolling mechanism.
+        Returns a tuple of (successes, ones).
         """
         stats = character.db.stats
         if not stats or 'pools' not in stats or 'temporary' not in stats['pools'] or 'Gnosis' not in stats['pools']['temporary']:
             character.msg("Error: Gnosis attribute not found. Please contact an admin.")
-            return False
+            return 0, 0
         
         gnosis = stats['pools']['temporary']['Gnosis']['perm']
         if gnosis is None:
             character.msg("Error: Permanent Gnosis value is None. Please contact an admin.")
-            return False
+            return 0, 0
         
         # Convert gnosis to an integer if it's stored as a string
         if isinstance(gnosis, str):
@@ -281,14 +343,16 @@ class RoomParent(DefaultRoom):
                 gnosis = int(gnosis)
             except ValueError:
                 character.msg("Error: Invalid Gnosis value. Please contact an admin.")
-                return False
+                return 0, 0
         
-        # Placeholder: Simulate rolling Gnosis dice against difficulty
         successes = 0
+        ones = 0
         for _ in range(gnosis):
             roll = random.randint(1, 10)
             if roll >= difficulty:
                 successes += 1
+            elif roll == 1:
+                ones += 1
         
         character.msg(f"Gnosis Roll: {successes} successes against difficulty {difficulty}")
-        return successes > 0
+        return successes, ones
