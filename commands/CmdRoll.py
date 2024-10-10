@@ -4,6 +4,7 @@ from evennia.utils import inherits_from
 from world.wod20th.models import Stat
 from world.wod20th.utils.dice_rolls import roll_dice, interpret_roll_results
 import re
+from difflib import get_close_matches
 
 class CmdRoll(default_cmds.MuxCommand):
     """
@@ -103,28 +104,36 @@ class CmdRoll(default_cmds.MuxCommand):
 
     def get_stat_value_and_name(self, stat_name):
         """
-        Retrieve the value and full name of a stat for the character by querying the Stat model.
-        Returns (0, capitalized_input) if the stat doesn't exist or has a non-numeric value.
+        Retrieve the value and full name of a stat for the character by searching the character's stats.
+        Returns the closest matching stat if an exact match is not found.
         """
         if not inherits_from(self.caller, "typeclasses.characters.Character"):
             self.caller.msg("Error: This command can only be used by characters.")
             return 0, stat_name.capitalize()
 
-        # Query the Stat model for the given stat name
-        stat = Stat.objects.filter(name__icontains=stat_name).first()
+        character_stats = self.caller.db.stats or {}
+        all_stats = []
 
+        # Flatten the nested dictionary structure
+        for category in character_stats.values():
+            for stat_type in category.values():
+                all_stats.extend(stat_type.keys())
 
-        value = self.caller.get_stat(stat.category, stat.stat_type, stat.name)
+        # Find the closest matching stat name
+        closest_matches = get_close_matches(stat_name.lower(), [s.lower() for s in all_stats], n=1, cutoff=0.6)
         
-        try:
-            if value is not None:
-                try:
-                    return int(value), stat.name
-                except ValueError:
-                    # If the value can't be converted to an integer, treat it as 0
-                    return 0, stat.name
+        if closest_matches:
+            closest_match = next(s for s in all_stats if s.lower() == closest_matches[0])
+            
+            # Find the category and stat_type for the matched stat
+            for category, cat_stats in character_stats.items():
+                for stat_type, stats in cat_stats.items():
+                    if closest_match in stats:
+                        value = stats[closest_match]['perm']
+                        try:
+                            return int(value), closest_match
+                        except ValueError:
+                            return 0, closest_match
 
-            # If no matching stat is found or its value is None, return 0 and the capitalized input
-            return 0, stat.name.capitalize()
-        except AttributeError:
-            return 0, stat_name
+        # If no matching stat is found, return 0 and the capitalized input
+        return 0, stat_name.capitalize()
