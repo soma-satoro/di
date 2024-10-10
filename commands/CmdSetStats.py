@@ -1,6 +1,21 @@
 from evennia import default_cmds
-from world.wod20th.models import Stat
-from evennia.locks.lockhandler import LockHandler
+from world.wod20th.models import Stat, SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN
+
+# Define the allowed identity stats for each shifter type
+SHIFTER_IDENTITY_STATS = {
+    "Garou": ["Tribe", "Breed", "Auspice"],
+    "Gurahl": ["Tribe", "Breed", "Auspice"],
+    "Rokea": ["Tribe", "Breed", "Auspice"],
+    "Ananasi": ["Aspect", "Ananasi Faction", "Breed", "Ananasi Cabal"],
+    "Ajaba": ["Aspect", "Breed"],
+    "Bastet": ["Tribe", "Breed"],
+    "Corax": ["Breed"],
+    "Kitsune": ["Kitsune Path", "Kitsune Faction", "Breed"],
+    "Mokole": ["Varnas", "Stream", "Breed"],
+    "Nagah": ["Crown", "Breed", "Auspice"],
+    "Nuwisha": ["Breed"],
+    "Ratkin": ["Aspect", "Plague", "Breed"]
+}
 
 class CmdStats(default_cmds.MuxCommand):
     """
@@ -145,6 +160,28 @@ class CmdStats(default_cmds.MuxCommand):
         except AttributeError:
             pass
         
+        # Check if the stat being set is an identity stat for a shifter
+        if character.get_stat('other', 'splat', 'Splat').lower() == 'shifter' and stat.category == 'identity':
+            shifter_type = character.get_stat('identity', 'lineage', 'Type')
+            if shifter_type and full_stat_name != 'Type':
+                allowed_stats = SHIFTER_IDENTITY_STATS.get(shifter_type, [])
+                if full_stat_name not in allowed_stats:
+                    self.caller.msg(f"|rThe stat '{full_stat_name}' is not valid for {shifter_type} characters.|n")
+                    return
+
+        # Add this check before updating the stat
+        if stat.category == 'pools':
+            splat = character.get_stat('other', 'splat', 'Splat')
+            valid_pools = ['Willpower']
+            if splat.lower() == 'vampire':
+                valid_pools.extend(['Blood', 'Road'])
+            elif splat.lower() == 'shifter':
+                valid_pools.extend(['Gnosis', 'Rage'])
+            
+            if full_stat_name not in valid_pools:
+                self.caller.msg(f"|rThe pool '{full_stat_name}' is not valid for {splat}.|n")
+                return
+
         # Determine if the stat should be removed
         if self.value_change == '':
             current_stats = character.db.stats.get(stat.category, {}).get(stat.stat_type, {})
@@ -201,11 +238,103 @@ class CmdStats(default_cmds.MuxCommand):
             self.caller.msg(f"|gUpdated {character.name}'s {full_stat_name} to {new_value}.|n")
             character.msg(f"|y{self.caller.name}|n |gupdated your|n '|y{full_stat_name}|n' |gto|n '|y{new_value}|n'.")
 
+        # If the stat is 'Type' for a Shifter, apply the correct pools and renown
+        if full_stat_name == 'Type' and character.get_stat('other', 'splat', 'Splat').lower() == 'shifter':
+            self.apply_shifter_pools(character, new_value)
+
         # If the stat is Willpower, update the temporary Willpower pool to match the permanent value
         if full_stat_name == 'Willpower':
             character.set_stat('pools', 'temporary', 'Willpower', new_value, temp=True)
             self.caller.msg(f"|gAlso updated {character.name}'s temporary Willpower pool to {new_value}.|n")
             character.msg(f"|gYour temporary Willpower pool has also been set to {new_value}.|n")
+
+        # If the stat is 'Splat', apply the correct pools
+        if full_stat_name == 'Splat':
+            self.apply_splat_pools(character, new_value)
+
+    def apply_splat_pools(self, character, splat):
+        """Apply the correct pools based on the character's splat."""
+        # Remove all existing pools except Willpower
+        character.db.stats['pools'] = {k: v for k, v in character.db.stats.get('pools', {}).items() if k == 'Willpower'}
+
+        # Add Willpower for all characters if it doesn't exist
+        if 'Willpower' not in character.db.stats['pools']:
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=True)
+
+        if splat.lower() == 'vampire':
+            # Add Vampire-specific pools
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
+            character.set_stat('pools', 'moral', 'Road', 7, temp=False)
+        elif splat.lower() == 'shifter':
+            # Add default Shifter pools (will be adjusted in apply_shifter_pools if necessary)
+            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
+
+        self.caller.msg(f"|gApplied default pools for {splat} to {character.name}.|n")
+        character.msg(f"|gYour default pools for {splat} have been applied.|n")
+
+    def apply_shifter_pools(self, character, shifter_type):
+        """Apply the correct pools and renown based on the Shifter's type."""
+        # Ensure Willpower exists
+        if 'Willpower' not in character.db.stats.get('pools', {}):
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=True)
+
+        # Set Gnosis for all Shifter types
+        character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
+        character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
+
+        if shifter_type == 'Ananasi':
+            # Remove Rage if it exists
+            if 'Rage' in character.db.stats.get('pools', {}):
+                del character.db.stats['pools']['Rage']
+            # Add Blood
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
+        else:
+            # Remove Blood if it exists
+            if 'Blood' in character.db.stats.get('pools', {}):
+                del character.db.stats['pools']['Blood']
+            # Add Rage
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
+
+        # Set Renown
+        renown_types = SHIFTER_RENOWN.get(shifter_type, [])
+        for renown_type in renown_types:
+            character.set_stat('advantages', 'renown', renown_type, 0, temp=False)
+
+        self.caller.msg(f"|gApplied specific pools and renown for {shifter_type} to {character.name}.|n")
+        character.msg(f"|gYour specific pools and renown for {shifter_type} have been applied.|n")
+
+    def apply_splat_pools(self, character, splat):
+        """Apply the correct pools based on the character's splat."""
+        # Remove all existing pools except Willpower
+        character.db.stats['pools'] = {k: v for k, v in character.db.stats.get('pools', {}).items() if k == 'Willpower'}
+
+        # Add Willpower for all characters if it doesn't exist
+        if 'Willpower' not in character.db.stats['pools']:
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Willpower', 1, temp=True)
+
+        if splat.lower() == 'vampire':
+            # Add Vampire-specific pools
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
+            character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
+            character.set_stat('pools', 'moral', 'Road', 7, temp=False)
+        elif splat.lower() == 'shifter':
+            # Add Shifter-specific pools
+            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
+            character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
+
+        self.caller.msg(f"|gApplied default pools for {splat} to {character.name}.|n")
+        character.msg(f"|gYour default pools for {splat} have been applied.|n")
 
 from evennia.commands.default.muxcommand import MuxCommand
 from world.wod20th.models import Stat

@@ -1,16 +1,5 @@
 [
     {
-        "name": "Willpower",
-        "description": "Willpower measures a character's inner drive and competence at overcoming unfavorable odds. Unlike other Traits, Willpower has both a permanent rating and a temporary pool of points. The rating is rolled or tested, while the pool is spent. A character's Willpower pool will likely fluctuate during the course of a story or chronicle. It decreases by one point every time a player uses a Willpower point to enable their character to do something extraordinary, like maintain self-control or gain an automatic success. Willpower points can be regained during the course of a story.",
-        "game_line": "Shifter",
-        "category": "pools",
-        "stat_type": "dual",
-        "values": {
-            "permanent": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "temporary": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        }
-    },
-    {
         "name": "Gnosis",
         "description": "A character's Gnosis pool measures a character's connection to the supernatural world and Gaia (or the Wyrm, if they have been corrupted).",
         "game_line": "Shifter",
@@ -36,7 +25,7 @@
         "name": "Obligation",
         "description": "Obligation measures a character's commitment to a cause, a promise, or a duty. It is a moral trait, and its rating is used to determine how much a character is willing to sacrifice for a cause, a promise, or a duty.",
         "game_line": "Ajaba, Ratkin",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -47,7 +36,7 @@
         "name": "Obedience",
         "description": "Obedience indicates a character's willingness to follow orders or instructions. It is a moral trait, and its rating is used to determine how much a character is willing to follow orders or instructions.",
         "game_line": "Ananasi",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -58,7 +47,7 @@
         "name": "Ferocity",
         "description": "Ferocity measures a character's willingness to fight or defend themselves or others. It is a moral trait, and its rating is used to determine how much a character is willing to fight or defend themselves or others.",
         "game_line": "Bastet",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -69,7 +58,7 @@
         "name": "Succor",
         "description": "Succor measures a character's willingness to help others. It is a moral trait, and its rating is used to determine how much a character is willing to help others.",
         "game_line": "Gurahl",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -80,7 +69,7 @@
         "name": "Cunning",
         "description": "Cunning measures a character's ability to deceive, manipulate, or outsmart others. It is a moral trait, and its rating is used to determine how much a character is willing to deceive, manipulate, or outsmart others.",
         "game_line": "Ajaba, Ananasi, Bastet, Kitsune, Ratkin, Nuwisha",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -91,7 +80,7 @@
         "name": "Glory",
         "description": "Glory measures a character's desire for recognition, fame, or glory.",
         "game_line": "Garou, Corax, Kitsune, Nuwisha, Mokole",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -102,7 +91,7 @@
         "name": "Honor",
         "description": "Honor measures a character's sense of right and wrong. It is a moral trait, and its rating is used to determine how much a character is willing to follow their sense of right and wrong.",
         "game_line": "Garou, Corax, Kitsune, Mokole, Bastet, Gurahl",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -113,7 +102,7 @@
         "name": "Wisdom",
         "description": "Wisdom measures a character's ability to understand the world and make wise decisions. It is a moral trait, and its rating is used to determine how much a character is willing to understand the world and make wise decisions.",
         "game_line": "Ananasi, Corax, Gurahl, Mokole, Garou",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -124,7 +113,7 @@
         "name": "Humor",
         "description": "Humor measures a character's ability to find humor in the world. It is a moral trait, and its rating is used to determine how much a character is willing to find humor in the world.",
         "game_line": "Nuwisha",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -135,7 +124,7 @@
         "name": "Infamy",
         "description": "Infamy measures a character's notoriety or infamy. It is a moral trait, and its rating is used to determine how much a character is willing to be known for their notoriety or infamy.",
         "game_line": "Ratkin",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -146,7 +135,7 @@
         "name": "Valor",
         "description": "Valor measures a character's bravery or courage. It is a moral trait, and its rating is used to determine how much a character is willing to be brave or courageous.",
         "game_line": "Rokea",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -157,7 +146,7 @@
         "name": "Harmony",
         "description": "Harmony measures a character's ability to work with others. It is a moral trait, and its rating is used to determine how much a character is willing to work with others.",
         "game_line": "Rokea",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -168,7 +157,7 @@
         "name": "Innovation",
         "description": "Innovation measures a character's ability to think outside the box and come up with new ideas. It is a moral trait, and its rating is used to determine how much a character is willing to think outside the box and come up with new ideas.",
         "game_line": "Rokea",
-        "category": "virtues",
+        "category": "advantages",
         "stat_type": "renown",
         "values": {
             "perm": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],

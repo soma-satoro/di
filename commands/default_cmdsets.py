@@ -35,7 +35,7 @@ from commands.CmdUmbraInteraction import CmdUmbraInteraction
 from commands.communication import CmdMeet, CmdPlusIc, CmdPlusOoc, CmdOOC, CmdSummon, CmdJoin
 from commands.admin import CmdApprove, CmdUnapprove
 from commands.CmdPump import CmdPump
-
+from commands.CmdSpendGain import CmdSpendGain
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -75,6 +75,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdPlusOoc())
         self.add(CmdOOC())
         self.add(CmdPump())
+        self.add(CmdSpendGain())
+        
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is

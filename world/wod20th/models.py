@@ -126,3 +126,138 @@ class Note(SharedMemoryModel):
 def calculate_willpower(character):
     courage = character.db.stats.get("Courage", 1)  # Default to 1 if not set
     return courage
+
+SHIFTER_IDENTITY_STATS = {
+    "Garou": ["Tribe", "Breed", "Auspice"],
+    "Gurahl": ["Tribe", "Breed", "Auspice"],
+    "Rokea": ["Tribe", "Breed", "Auspice"],
+    "Ananasi": ["Aspect", "Ananasi Faction", "Breed", "Ananasi Cabal"],
+    "Ajaba": ["Aspect", "Breed"],
+    "Bastet": ["Tribe", "Breed"],
+    "Corax": ["Breed"],
+    "Kitsune": ["Kitsune Path", "Kitsune Faction", "Breed"],
+    "Mokole": ["Varnas", "Stream", "Breed"],
+    "Nagah": ["Crown", "Breed", "Auspice"],
+    "Nuwisha": ["Breed"],
+    "Ratkin": ["Aspect", "Plague", "Breed"]
+}
+SHIFTER_RENOWN = {
+    "Ajaba": ["Cunning", "Ferocity", "Obligation"],
+    "Ananasi": ["Cunning", "Obedience", "Wisdom"],
+    "Bastet": ["Cunning", "Ferocity", "Honor"],
+    "Corax": ["Glory", "Honor", "Wisdom"],
+    "Garou": ["Glory", "Honor", "Wisdom"],
+    "Gurahl": ["Honor", "Succor", "Wisdom"],
+    "Kitsune": ["Cunning", "Honor", "Glory"],
+    "Mokole": ["Glory", "Honor", "Wisdom"],
+    "Nagah": [],  # Nagah don't use Renown
+    "Nuwisha": ["Humor", "Glory", "Cunning"],
+    "Ratkin": ["Infamy", "Obligation", "Cunning"],
+    "Rokea": ["Valor", "Harmony", "Innovation"]
+}
+
+CLAN = {
+    'Brujah', 'Gangrel', 'Malkavian', 'Nosferatu', 'Toreador', 'Tremere', 'Ventrue', 'Lasombra', 
+    'Tzimisce', 'Assamite', 'Followers of Set', 'Hecata', 'Ravnos', 'Baali', 'Blood Brothers', 
+    'Daughters of Cacophony', 'Gargoyles', 'Kiasyd', 'Nagaraja', 'Salubri', 'Samedi', 'True Brujah'
+}
+
+MAGE_FACTION = {
+    'Traditions', 'Technocracy', 'Nephandi'
+}
+
+TRADITION = {
+    'Cultists of Ecstasy', 'Euthanatos', 'Celestial Chorus', 'Akashic Brotherhood',
+    'Dreamspeakers', 'Virtual Adepts', 'Order of Hermes', 'Verbena',
+    'Sons of Ether'
+}
+
+TRADITION_SUBFACTION = {
+    'Akashic Brotherhood': [
+        'Chabnagpa', 'Lin Shen', 'Wu Shan', 'Yamabushi', 'Jina', 'Karmachakra', 'Shaolin', 'Blue Skins',
+        'Mo-Tzu Fa', "Roda d'Oro", 'Gam Lung', 'Han Fei Tzu Academy', 'Kaizankai', 'Banner of the Ebon Dragon', 
+        'Sulsa', 'Tenshi Arashi Ryu', 'Wu Lung'
+    ],
+    'Celestial Chorus': [
+        'Brothers of St. Christopher', 'Chevra Kedisha', 'Knights of St. George', 'Order of St. Michael', 
+        'Poor Knights of the Temple of Solomon', 'Sisters of Gabrielle', 'Alexandrian Society', 'Anchorite',
+        'Children of Albi', 'Latitudinarian', 'Monist', 'Nashimite', 'Septarian', 'Hare Krishna', 'Hindu',
+        'Jain', 'Son of Mithras', 'Rastafarian', 'Sikh', 'Sufi', 'Bat Binah', 'Song of the Ancients'
+    ],
+    'Cultists of Ecstasy': [
+        'Erzuli Jingo', 'Kiss of Astarte', 'Maenad', "K'an Lu", 'Vratyas', 'Aghoris', 'Acharne', 'Freyji',
+        'Sons of Wotan', 'Sutr', 'Joybringers', 'Dissonance Society', 'Klubwerks', "Children's Crusade",
+        'Cult of Acceptance', 'Silver Bridges', 'Los Sabios Locos', "Ka'a", 'Khlysty Flagellants', 
+        "Bongo's Rangers", 'Dervish', 'Confrerie Chango', 'Roda do Jogo', 'Los Sangradores', 'Studiosi',
+        'Umilyenye'
+    ],
+    'Euthanatos': [
+        'Aided', 'Devasu', 'Lhakmist', 'Natatapa', 'Knight of Radamanthys', 'Pomegranate Deme', "N'anga",
+        'Ta Kiti', 'Albireo', 'Chakramuni', 'Golden Chalice', 'Pallottino', 'Scholars of the Wheel', "Yggdrasil's Keepers",
+        'Yum Cimil'
+    ],
+    'Dreamspeakers': [
+        'Balomb', 'Baruti', 'Contrary', 'Four Winds', 'Ghost Wheel Society', 'Keeper of the Sacred Fire', 
+        'Kopa Loei', 'Red Spear Society', 'Sheikha', 'Solitaries', 'Spirit Smith', 'Uzoma'
+    ],
+    'Order of Hermes': [
+        'House Bonisagus', 'House Flambeau', 'House Fortunae', 'House Quaesitori', 'House Shaea', 'House Tytalus',
+        'House Verditius', 'House Criamon', 'House Jerbiton', 'House Merinita', 'House Skopos', 'House Xaos'
+    ],
+    'Verbena': [
+        'Gardeners of the Tree', 'Lifeweavers', 'Moon-Seekers', 'Twisters of Fate', 'Techno-Pagans', 'Fairy Folk', 'New Age'
+    ],
+    'Sons of Ether': [
+        'Ethernauts', 'Cybernauts', 'Utopians', 'Adventurers', 'Mad Scientists', 'Progressivists', 'Aquanauts'
+    ],
+    'Virtual Adepts': [
+        'Chaoticians', 'Cyberpunk', 'Cypherpunks', 'Nexplorers', 'Reality Coders'
+    ]
+}
+
+CONVENTION = {
+    'Iteration X', 'New World Order', 'Progenitor', 'Syndicate', 'Void Engineer'
+}
+
+METHODOLOGIES = {
+    'Iteration X': [
+        'BioMechanics', 'Macrotechnicians', 'Statisticians', 'Time-Motion Managers'
+    ],
+    'New World Order': [
+        'Ivory Tower', 'Operatives', 'Watchers', 'The Feed', 'Q Division', 'Agronomists'
+    ],
+    'Progenitors': [
+        'Applied Sciences', 'Deviancy Scene investigators', 'Médecins Sans Superstition',
+        'Biosphere Explorers', 'Damage Control', 'Ethical Compliance', 'FACADE Engineers',
+        'Genegineers', 'Pharmacopoeists', 'Preservationists', 'Psychopharmacopoeists', 
+        'Shalihotran Society'
+    ],
+    'Syndicate': [
+        'Disbursements', 'Assessment Division', 'Reorganization Division', 'Procurements Division',
+        'Extraction Division', 'Enforcers (Hollow Men)', 'Legal Division', 'Extralegal Division',
+        'Extranational Division', 'Information Specialists', 'Special Information Security Division',
+        'Financiers', 'Acquisitions Division', 'Entrepreneurship Division', 'Liquidation Division',
+        'Media Control', 'Effects Division', 'Spin Division', 'Marketing Division', 'Special Projects Division'
+    ],
+    'Void Engineer': [
+        'Border Corps Division', 'Earth Frontier Division', 'Aquatic Exploration Teams',
+        'Cryoregional Specialists', 'Hydrothermal Botanical Mosaic Analysts', 'Inaccessible High Elevation Exploration Teams',
+        'Subterranean Exploration Corps', 'Neutralization Specialist Corps', 'Neutralization Specialists', 
+        'Enforcement Training and Conditioning Agency', 'Department of Psychological Evaluation and Maintenance', 'Pan-Dimensional Corps', 
+        'Deep Exploration Teams', 'Solar Exploration Teams', 'Cybernauts', 'Chrononauts', 'Research & Execution'
+    ]
+}
+
+NEPHANDI_FACTION = {
+    'Herald of the Basilisk', 'Obliviate', 'Malfean', 'Baphie', 
+    'Infernalist', 'Ironhand', 'Mammonite', "K'llashaa"
+}
+
+SEEMING = {
+    'Childing', 'Wilder', 'Grump'
+}
+
+KITH = {
+    'Boggan', 'Clurichaun', 'Eshu', 'Nocker', 'Piskie', 'Pooka', 'Redcap', 'Satyr', 
+    'Selkie', 'Arcadian Sidhe', 'Autumn Sidhe', 'Sluagh', 'Troll'
+}

@@ -13,7 +13,7 @@
         "game_line": "Various",
         "category": "other",
         "stat_type": "splat",
-        "values": ["Vampire", "Shifter"]
+        "values": ["Vampire", "Shifter", "Mortal", "Mage", "Changeling"]
     },
         {
         "name": "Age",

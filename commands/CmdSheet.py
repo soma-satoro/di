@@ -1,8 +1,10 @@
 from evennia.commands.default.muxcommand import MuxCommand
+from world.wod20th.models import SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN
 from world.wod20th.models import Stat
 from evennia.utils.ansi import ANSIString
 from world.wod20th.utils.damage import format_damage, format_status, format_damage_stacked
 from world.wod20th.utils.formatting import format_stat, header, footer, divider
+from itertools import zip_longest
 
 class CmdSheet(MuxCommand):
     """
@@ -44,26 +46,38 @@ class CmdSheet(MuxCommand):
         if not stats:
             character.db.stats = {}
         
-        identity_stats = Stat.objects.filter(category='identity')
-
         string = header(f"Character Sheet for:|n {character.get_display_name(self.caller)}")
         
-        bio = []
-        for stat in identity_stats:
-            if stat.can_access(character, 'view') or not stat.lock_string:
-                bio.append(format_stat(stat.name, character.get_stat(stat.category, stat.stat_type, stat.name), default="", width=38))
-
-
-        bio.append(format_stat("Splat", splat, default="", width=38))
-
         string += header("Identity", width=78, color="|y")
+        
+        splat = character.get_stat('other', 'splat', 'Splat') or ''
+        
+        # Common stats for all characters
+        common_stats = ['Full Name', 'Age', 'Concept', 'Nature', 'Demeanor']
+        
+        if splat.lower() == 'vampire':
+            valid_identity_stats = common_stats + ['Clan', 'Generation', 'Sire', 'Splat']
+        elif splat.lower() == 'shifter':
+            shifter_type = character.get_stat('identity', 'lineage', 'Type')
+            valid_identity_stats = common_stats + ['Type'] + SHIFTER_IDENTITY_STATS.get(shifter_type, []) + ['Splat']
+        else:  # For other splats or unspecified
+            valid_identity_stats = common_stats + ['Splat']
+
+        bio = []
+        for stat_name in valid_identity_stats:
+            if stat_name == 'Splat':
+                value = splat
+            else:
+                value = character.get_stat('identity', 'lineage', stat_name) or ''
+            bio.append(format_stat(stat_name, value, default="", width=38))
+
+        # Split the bio list into two columns
         bio1 = bio[:len(bio)//2]
         bio2 = bio[len(bio)//2:]
-        for b1, b2 in zip(bio1, bio2):
-            string += f"{b1} {b2}\n"
 
-        if len(bio) % 2:
-            string += f"{bio[-1]}\n"
+        # Combine the two columns
+        for b1, b2 in zip_longest(bio1, bio2, fillvalue=" " * 38):
+            string += f"{b1}  {b2}\n"
 
         string += header("Attributes", width=78, color="|y")
         string += " " + divider("Physical", width=25, fillchar=" ") + " "
@@ -158,10 +172,41 @@ class CmdSheet(MuxCommand):
             for discipline, background, virtue in zip(disciplines, backgrounds, virtues):
                 string += f"{discipline} {background} {virtue}\n"
 
+        elif character.db.splat == "Shifter":
+            shifter_type = character.get_stat('identity', 'lineage', 'Type')
+            
+            backgrounds = [format_stat(background, character.get_stat('backgrounds', 'background', background), default=0, tempvalue=character.get_stat('backgrounds', 'background', background, temp=True)) for background in character.db.stats.get('backgrounds', {}).get('background', {}).keys()]
+            
+            gifts = [format_stat(gift, character.get_stat('powers', 'gift', gift), default=0, tempvalue=character.get_stat('powers', 'gift', gift, temp=True)) for gift in character.db.stats.get('powers', {}).get('gift', {}).keys()]
+            
+            renown_types = SHIFTER_RENOWN.get(shifter_type, [])
+            renown = [format_stat(renown_type, character.get_stat('advantages', 'renown', renown_type), default=0, tempvalue=character.get_stat('advantages', 'renown', renown_type, temp=True)) for renown_type in renown_types]
+
+            string += header("Advantages", width=78, color="|y")
+            string += divider("Gifts", width=25, fillchar=" ") + " "
+            string += divider("Backgrounds", width=25, fillchar=" ") + " "
+            string += divider("Renown", width=25, fillchar=" ") + "\n"
+
+            max_len = max(len(gifts), len(backgrounds), len(renown))
+            while len(gifts) < max_len:
+                gifts.append(" " * 25)
+            while len(backgrounds) < max_len:
+                backgrounds.append(" " * 25)
+            while len(renown) < max_len:
+                renown.append(" " * 25)
+
+            for gift, background, renown_stat in zip(gifts, backgrounds, renown):
+                string += f"{gift} {background} {renown_stat}\n"
+
+        # Get the splat from the stats
+        character_splat = character.get_stat('other', 'splat', 'Splat') or "Unknown"
+        print(f"Character splat: {character_splat}")
+        print(f"Character stats: {character.db.stats}")
+
         string += header("Other", width=78, color="|y")
-        string += divider("Merits", width=25, fillchar=" " ) + " "
-        string += divider("Pools", width=25, fillchar=" ") + " " 
-        string += divider("Health & Status", width=25, fillchar=" ") + "\n"
+        string += divider("Merits", width=25, fillchar=" ", color="|b") + " "
+        string += divider("Pools", width=25, fillchar=" ", color="|b") + " " 
+        string += divider("Health & Status", width=25, fillchar=" ", color="|b") + "\n"
 
         merits = []
         for category, merits_dict in character.db.stats.get('merits', {}).items():
@@ -178,15 +223,42 @@ class CmdSheet(MuxCommand):
             merits.append(divider("Flaws", width=25))
             merits.extend(flaws)
 
-
         health = format_damage_stacked(character)
 
-        pools = Stat.objects.filter(category='pools')
-        pools = [format_stat(pool.name, 
-                             character.get_stat(pool.category, pool.stat_type, pool.name), 
-                             default=0, 
-                             tempvalue=character.get_stat(pool.category, pool.stat_type, pool.name, temp=True)) 
-                 for pool in pools]
+        print("About to process pools")
+        # Show appropriate pools
+        pools = []
+        valid_pools = ['Willpower']
+        if character_splat.lower() == 'vampire':
+            valid_pools.extend(['Blood', 'Road'])
+        elif character_splat.lower() == 'shifter':
+            valid_pools.extend(['Rage', 'Gnosis'])
+
+        print(f"Valid pools: {valid_pools}")
+
+        for pool_name in valid_pools:
+            pool_value = character.get_stat('pools', 'dual', pool_name) or 0
+            pools.append(format_stat(pool_name, pool_value, 
+                         tempvalue=character.get_stat('pools', 'dual', pool_name, temp=True)))
+
+        print(f"Pools after processing: {pools}")
+
+        # Add Renown for Shifters
+        if character_splat.lower() == "shifter":
+            print("Processing Shifter Renown")
+            shifter_type = character.get_stat('identity', 'lineage', 'Type')
+            print(f"Shifter Type: {shifter_type}")
+            renown_types = SHIFTER_RENOWN.get(shifter_type, [])
+            print(f"Renown Types: {renown_types}")
+            if renown_types:
+                pools.append(" " * 25)
+                pools.append(divider("Renown", width=25, color="|b"))  # Change color to blue here
+                for renown_type in renown_types:
+                    renown_value = character.get_stat('advantages', 'renown', renown_type) or 0
+                    print(f"Renown {renown_type}: {renown_value}")
+                    pools.append(format_stat(renown_type, renown_value, default=0))  # Add default=0 here
+
+        print(f"Final pools: {pools}")
 
         max_len = max(len(merits), len(pools), len(health))
         while len(merits) < max_len:

@@ -533,6 +533,10 @@ GAROU_AUSPICE = {
     'Ragabash', 'Galliard', 'Theurge', 'Ahroun', 'Philodox'
 }
 
+MAGE_FACTION = {
+    'Traditions', 'Technocracy', 'Nephandi'
+}
+
 TRADITION = {
     'Cultists of Ecstasy', 'Euthanatos', 'Celestial Chorus', 'Akashic Brotherhood',
     'Dreamspeakers', 'Virtual Adepts', 'Order of Hermes', 'Verbena',
@@ -613,10 +617,6 @@ METHODOLOGIES = {
     'Enforcement Training and Conditioning Agency', 'Department of Psychological Evaluation and Maintenance', 'Pan-Dimensional Corps', 
     'Deep Exploration Teams', 'Solar Exploration Teams', 'Cybernauts', 'Chrononauts', 'Research & Execution'
     ]
-}
-
-MAGE_FACTION = {
-    'Traditions', 'Technocracy', 'Nephandi'
 }
 
 NEPHANDI_FACTION = {
