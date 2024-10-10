@@ -190,12 +190,22 @@ class CmdStats(default_cmds.MuxCommand):
             return
 
         # Update the stat
-        character.set_stat(stat.category, stat.stat_type, full_stat_name, new_value, temp=self.temp)
+        character.set_stat(stat.category, stat.stat_type, full_stat_name, new_value, temp=False)
+        
+        # If the stat is in the 'pools' category or has a 'dual' stat_type, update the temporary value as well
+        if stat.category == 'pools' or stat.stat_type == 'dual':
+            character.set_stat(stat.category, stat.stat_type, full_stat_name, new_value, temp=True)
+            self.caller.msg(f"|gUpdated {character.name}'s {full_stat_name} to {new_value} (both permanent and temporary).|n")
+            character.msg(f"|y{self.caller.name}|n |gupdated your|n '|y{full_stat_name}|n' |gto|n '|y{new_value}|n' |g(both permanent and temporary).|n")
+        else:
+            self.caller.msg(f"|gUpdated {character.name}'s {full_stat_name} to {new_value}.|n")
+            character.msg(f"|y{self.caller.name}|n |gupdated your|n '|y{full_stat_name}|n' |gto|n '|y{new_value}|n'.")
 
-        self.caller.msg(f"|gUpdated {character.name}'s {full_stat_name} to {new_value}.|n")
-        character.msg(f"|y{self.caller.name}|n |gupdated your|n '|y{full_stat_name}|n' |gto|n '|y{new_value}|n'.")
-
-
+        # If the stat is Willpower, update the temporary Willpower pool to match the permanent value
+        if full_stat_name == 'Willpower':
+            character.set_stat('pools', 'temporary', 'Willpower', new_value, temp=True)
+            self.caller.msg(f"|gAlso updated {character.name}'s temporary Willpower pool to {new_value}.|n")
+            character.msg(f"|gYour temporary Willpower pool has also been set to {new_value}.|n")
 
 from evennia.commands.default.muxcommand import MuxCommand
 from world.wod20th.models import Stat

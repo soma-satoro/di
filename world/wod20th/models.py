@@ -61,7 +61,8 @@ STAT_TYPES = [
     ('moral', 'Moral'),
     ('inhuman', 'Inhuman'),
     ('temporary', 'Temporary'),
-    ('other', 'Other')
+    ('dual', 'Dual'),
+    ('renown', 'Renown'),
 ]
 
 class Stat(models.Model):

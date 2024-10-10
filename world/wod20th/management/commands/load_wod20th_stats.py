@@ -13,7 +13,7 @@ import django
 django.setup()
 
 # Import the Stat model
-from world.wod20th.models import Stat
+from world.wod20th.models import Stat, CATEGORIES, STAT_TYPES
 
 class Command(BaseCommand):
     help = 'Load WoD20th stats from a folder containing JSON files'
@@ -71,54 +71,59 @@ class Command(BaseCommand):
 
 
                     # Data validation
-                    if not game_line or not category or not stat_type:
-                        self.stdout.write(self.style.ERROR(f'Invalid data for stat {name}. Skipping entry.'))
+                    if not game_line:
+                        self.stdout.write(self.style.ERROR(f'Missing game_line for stat {name}. Skipping entry.'))
                         continue
 
-                    # Ensure values are a list
+                    if not category:
+                        self.stdout.write(self.style.WARNING(f'Missing category for stat {name}. Using "other".'))
+                        category = 'other'
+
+                    if not stat_type:
+                        self.stdout.write(self.style.WARNING(f'Missing stat_type for stat {name}. Using "other".'))
+                        stat_type = 'other'
+
+                    # Ensure category is valid
+                    if category not in dict(CATEGORIES):
+                        self.stdout.write(self.style.WARNING(f'Invalid category "{category}" for stat {name}. Using "other".'))
+                        category = 'other'
+
+                    # Ensure stat_type is valid
+                    if stat_type not in dict(STAT_TYPES):
+                        self.stdout.write(self.style.WARNING(f'Invalid stat_type "{stat_type}" for stat {name}. Using "other".'))
+                        stat_type = 'other'
+
+                    # Ensure values is a list
                     if not isinstance(values, list):
-                        self.stdout.write(self.style.ERROR(f'Invalid values for stat {name}. Values must be a list. Skipping entry.'))
-                        continue
-
-                    # Check if stat already exists
-                    existing_stat = Stat.objects.filter(name=name, game_line=game_line, category=category, stat_type=stat_type).first()
-                    if existing_stat:
-                        self.stdout.write(self.style.WARNING(f'Stat {name} already exists. Skipping entry.'))
-                        continue
-                    
-                    # Create new stat
-                    stat = Stat(
-                        name=name,
-                        description=description,
-                        game_line=game_line,
-                        category=category,
-                        stat_type=stat_type,
-                        values=values,
-                        lock_string=lock_string,
-                        default=default,
-                        instanced=instanceed,
-                        splat=splat,
-                        hidden=hidden,
-                        locked=locked
-                    )
-
-                    try:
-                        # Validate the model before saving
-                        stat.full_clean()
-                        stat.save()
-                        self.stdout.write(self.style.SUCCESS(f'Successfully created stat: {stat.name}'))
-                    except ValidationError as e:
-                        self.stdout.write(self.style.ERROR(f'Validation error for stat {stat.name}: {e}'))
-                    except IntegrityError:
-                        self.stdout.write(self.style.ERROR(f'IntegrityError: Could not create stat {name}. It might already exist.'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error saving stat {stat.name}: {e}'))
-                        self.stdout.write(self.style.ERROR(f'Stat object: {stat.__dict__}'))
-                        if connection.queries:
-                            last_query = connection.queries[-1]
-                            self.stdout.write(self.style.ERROR(f'SQL: {last_query.get("sql", "N/A")}'))
-                            self.stdout.write(self.style.ERROR(f'SQL params: {last_query.get("params", "N/A")}'))
+                        if isinstance(values, dict):
+                            values_list = []
+                            for key in ['permanent', 'temporary', 'perm', 'temp']:
+                                if key in values:
+                                    values_list.extend(values[key])
+                            values = values_list
                         else:
-                            self.stdout.write(self.style.ERROR('No SQL queries recorded.'))
+                            self.stdout.write(self.style.WARNING(f'Invalid values for stat {name}. Using empty list.'))
+                            values = []
+
+                    # Create new stat
+                    try:
+                        stat = Stat(
+                            name=name,
+                            description=description,
+                            game_line=game_line,
+                            category=category,
+                            stat_type=stat_type,
+                            values=values,
+                            lock_string=lock_string,
+                            default=default,
+                            instanced=instanceed,
+                            splat=splat,
+                            hidden=hidden,
+                            locked=locked
+                        )
+                        stat.save()
+                        self.stdout.write(self.style.SUCCESS(f'Successfully created stat: {name}'))
+                    except Exception as e:
+                        self.stdout.write(self.style.ERROR(f'Error creating stat {name}: {str(e)}'))
 
         self.stdout.write(self.style.SUCCESS('Finished processing all files.'))

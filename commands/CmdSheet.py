@@ -184,7 +184,11 @@ class CmdSheet(MuxCommand):
         health = format_damage_stacked(character)
 
         pools = Stat.objects.filter(category='pools')
-        pools = [format_stat(pool.name, character.get_stat(pool.category, pool.stat_type, pool.name), default=0, tempvalue=character.get_stat(pool.category, pool.stat_type, pool.name, temp=True)) for pool in pools]
+        pools = [format_stat(pool.name, 
+                             character.get_stat(pool.category, pool.stat_type, pool.name), 
+                             default=0, 
+                             tempvalue=character.get_stat(pool.category, pool.stat_type, pool.name, temp=True)) 
+                 for pool in pools]
 
         max_len = max(len(merits), len(pools), len(health))
         while len(merits) < max_len:

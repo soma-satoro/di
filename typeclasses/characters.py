@@ -1,4 +1,5 @@
 from evennia import DefaultCharacter
+print("DefaultCharacter:", DefaultCharacter)
 from evennia.utils.ansi import ANSIString
 from world.wod20th.models import Stat
 from evennia.utils import lazy_property
@@ -6,7 +7,13 @@ from world.wod20th.models import Note
 import re
 import random
 
-class Character(DefaultCharacter):
+from evennia import DefaultCharacter
+print("DefaultCharacter:", DefaultCharacter)
+
+# If DefaultCharacter is None, use object as a fallback
+BaseCharacter = DefaultCharacter if DefaultCharacter is not None else object
+
+class Character(BaseCharacter):
     """
     The Character typeclass.
     """
@@ -327,14 +334,21 @@ class Character(DefaultCharacter):
         category_stats = self.db.stats.get(category, {})
         type_stats = category_stats.get(stat_type, {})
 
-        for full_stat_name, stat in type_stats.items():
-            # Check if the base stat name matches the given stat_name
-            if full_stat_name.startswith(stat_name):
-                return stat['temp'] if temp else stat['perm']
-        
+        # Check for the stat in the current category and type
+        if stat_name in type_stats:
+            return type_stats[stat_name]['temp' if temp else 'perm']
+
+        # If not found and the category is 'pools', check in 'dual' as well
+        if category == 'pools' and 'dual' in self.db.stats:
+            dual_stats = self.db.stats['dual']
+            if stat_name in dual_stats:
+                return dual_stats[stat_name]['temp' if temp else 'perm']
+
+        # If still not found, check the Stat model
         stat = Stat.objects.filter(name=stat_name, category=category, stat_type=stat_type).first()
         if stat:
             return stat.default
+
         return None
 
     def set_stat(self, category, stat_type, stat_name, value, temp=False):
