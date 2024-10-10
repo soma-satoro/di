@@ -128,7 +128,7 @@ class CmdSheet(MuxCommand):
         for talent, skill, knowledge in zip(formatted_talents, formatted_skills, formatted_knowledges):
             string += f"{talent} {skill} {knowledge}\n"
 
-        if character.locks.check_lockstring(character, "view: is_splat(Vampire)"):
+        if character.db.splat == "Vampire":
             if not character.db.stats.get('backgrounds'):
                 backgrounds = []
             else:
@@ -143,22 +143,20 @@ class CmdSheet(MuxCommand):
             virtues = [format_stat(virtue.name, character.get_stat(virtue.category, virtue.stat_type, virtue.name)) for virtue in virtues if character.get_stat(virtue.category, virtue.stat_type, virtue.name)]
 
             string += header("Advantages", width=78, color="|y")
+            string += divider("Disciplines", width=25, fillchar=" ") + " "
+            string += divider("Backgrounds", width=25, fillchar=" ") + " "
+            string += divider("Virtues", width=25, fillchar=" ") + "\n"
 
-            if character.db.splat == "Vampire":
-                string += divider("Disciplines", width=25, fillchar=" ") + " "
-                string += divider("Backgrounds", width=25, fillchar=" ") + " "
-                string += divider("Virtues", width=25, fillchar=" ") + "\n"
+            max_len = max(len(disciplines), len(backgrounds), len(virtues))
+            while len(disciplines) < max_len:
+                disciplines.append(" " * 25)
+            while len(backgrounds) < max_len:
+                backgrounds.append(" " * 25)
+            while len(virtues) < max_len:
+                virtues.append(" " * 25)
 
-                max_len = max(len(disciplines), len(backgrounds), len(virtues))
-                while len(disciplines) < max_len:
-                    disciplines.append(" " * 25)
-                while len(backgrounds) < max_len:
-                    backgrounds.append(" " * 25)
-                while len(virtues) < max_len:
-                    virtues.append(" " * 25)
-
-                for discipline, background, virtue in zip(disciplines, backgrounds, virtues):
-                    string += f"{discipline} {background} {virtue}\n"
+            for discipline, background, virtue in zip(disciplines, backgrounds, virtues):
+                string += f"{discipline} {background} {virtue}\n"
 
         string += header("Other", width=78, color="|y")
         string += divider("Merits", width=25, fillchar=" " ) + " "

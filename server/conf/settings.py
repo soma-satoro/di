@@ -44,10 +44,7 @@ TELNET_PORTS = [4000]
 WEBSERVER_PORTS = [(4200, 4005)] 
 WEBSOCKET_CLIENT_PORT = 4202
 EVENNIA_ADMIN=False
-LOCK_FUNC_MODULES = [
-    "evennia.locks.lockfuncs",
-    "world.wod20th.locks", 
-]
+
 
 SERVERNAME = "beta.diesiraemu.com"
 TELNET_INTERFACES = ['0.0.0.0']
@@ -63,6 +60,10 @@ CSRF_TRUSTED_ORIGINS = ['https://beta.diesiraemu.com', 'http://beta.diesiraemu.c
 """
 INSTALLED_APPS += ["world.wod20th", 'world.requests']  # Add your app to the list of installed apps
 BASE_ROOM_TYPECLASS = "typeclasses.rooms.RoomParent"
+LOCK_FUNC_MODULES = [
+    "evennia.locks.lockfuncs",
+    "world.wod20th.locks", 
+]
   # Change 8001 to your desired websocket port
 ######################################################################
 # Settings given in secret_settings.py override those in this file.
