@@ -32,7 +32,7 @@ from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.building import CmdSetRoomResources, CmdSetRoomType, CmdSetUmbraDesc, CmdSetGauntlet, CmdUmbraInfo
 from commands.requests import CmdRequests
 from commands.CmdUmbraInteraction import CmdUmbraInteraction
-
+from commands.communication import CmdMeet, CmdPlusIc, CmdPlusOoc, CmdOOC, CmdSummon, CmdJoin
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -67,6 +67,10 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
 
 
         self.add(CmdUmbraInteraction())
+        self.add(CmdMeet())
+        self.add(CmdPlusIc())
+        self.add(CmdPlusOoc())
+        self.add(CmdOOC())
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
@@ -95,6 +99,8 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         self.add(CmdSay())
         self.add(CmdNotes())
         self.add(CmdRequests())
+        self.add(CmdSummon())
+        self.add(CmdJoin())
 
 class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
     """
