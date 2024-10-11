@@ -64,7 +64,18 @@ class CmdSheet(MuxCommand):
             shifter_type = character.db.stats.get('identity', {}).get('lineage', {}).get('Type', {}).get('perm', '')
             splat_specific_stats = ['Type'] + SHIFTER_IDENTITY_STATS.get(shifter_type, [])
         elif splat.lower() == 'mage':
-            splat_specific_stats = ['Essence', 'Mage Faction', 'Convention', 'Methodology']
+            mage_faction = character.db.stats.get('identity', {}).get('lineage', {}).get('Mage Faction', {}).get('perm', '')
+            splat_specific_stats = ['Essence', 'Mage Faction']
+            
+            if mage_faction.lower() == 'traditions':
+                traditions = character.db.stats.get('identity', {}).get('lineage', {}).get('Traditions', {}).get('perm', '')
+                splat_specific_stats.extend(['Traditions'])
+                if traditions:
+                    splat_specific_stats.append('Traditions Subfaction')
+            elif mage_faction.lower() == 'technocracy':
+                splat_specific_stats.extend(['Convention', 'Methodology'])
+            elif mage_faction.lower() == 'nephandi':
+                splat_specific_stats.append('Nephandi Faction')
         elif splat.lower() == 'changeling':
             splat_specific_stats = ['Kith', 'Seeming', 'House']
         else:
@@ -73,7 +84,10 @@ class CmdSheet(MuxCommand):
         all_stats = common_stats + splat_specific_stats + ['Splat']
         
         def format_stat_with_dots(stat, value, width=37):
-            stat_str = f" {stat}"
+            # Special case for 'Traditions Subfaction'
+            display_stat = 'Subfaction' if stat == 'Traditions Subfaction' else stat
+            
+            stat_str = f" {display_stat}"
             value_str = f"{value}"
             dots = "." * (width - len(stat_str) - len(value_str) - 1)
             return f"{stat_str}{dots}{value_str}"
@@ -271,7 +285,14 @@ class CmdSheet(MuxCommand):
                 gift_value = values.get('perm', 0)
                 powers.append(format_stat(gift, gift_value, default=0))
 
-        # Process merits, flaws, and other advantages
+        # Process backgrounds, merits, flaws, and other advantages
+        advantages.append(divider("Backgrounds", width=25, color="|b"))
+        backgrounds = character.db.stats.get('backgrounds', {}).get('background', {})
+        for background, values in backgrounds.items():
+            background_value = values.get('perm', 0)
+            advantages.append(format_stat(background, background_value, default=0))
+
+        advantages.append(" " * 25)
         advantages.append(divider("Merits & Flaws", width=25, color="|b"))
         for category, merits_dict in character.db.stats.get('merits', {}).items():
             for merit, values in merits_dict.items():
@@ -284,23 +305,44 @@ class CmdSheet(MuxCommand):
         # Process pools
         advantages.append(" " * 25)
         advantages.append(divider("Pools", width=25, color="|b"))
-        valid_pools = ['Willpower']
+        valid_pools = []
         if character_splat.lower() == 'vampire':
             valid_pools.extend(['Blood', 'Road'])
         elif character_splat.lower() == 'shifter':
             valid_pools.extend(['Rage', 'Gnosis'])
         elif character_splat.lower() == 'mage':
-            valid_pools.extend(['Arete', 'Quintessence', 'Paradox'])
+            advantages.append(" " * 25)
+            advantages.append(divider("Pools", width=25, color="|b"))
+            
+            # Willpower
+            willpower_perm = character.db.stats.get('pools', {}).get('dual', {}).get('Willpower', {}).get('perm', 0)
+            willpower_temp = character.db.stats.get('pools', {}).get('dual', {}).get('Willpower', {}).get('temp', willpower_perm)
+            advantages.append(format_stat("Willpower", willpower_perm, tempvalue=willpower_temp))
+            
+            # Arete (no temporary value)
+            arete_value = character.db.stats.get('other', {}).get('advantage', {}).get('Arete', {}).get('perm', 0)
+            advantages.append(format_stat("Arete", arete_value))
+            
+            # Quintessence
+            quintessence_perm = character.db.stats.get('pools', {}).get('dual', {}).get('Quintessence', {}).get('perm', 0)
+            quintessence_temp = character.db.stats.get('pools', {}).get('dual', {}).get('Quintessence', {}).get('temp', quintessence_perm)
+            advantages.append(format_stat("Quintessence", quintessence_perm, tempvalue=quintessence_temp))
+            
+            # Paradox (only temporary value)
+            paradox_temp = character.db.stats.get('pools', {}).get('dual', {}).get('Paradox', {}).get('temp', 0)
+            advantages.append(format_stat("Paradox", paradox_temp, tempvalue=paradox_temp))
         elif character_splat.lower() == 'changeling':
             valid_pools.extend(['Glamour', 'Banality'])
 
         for pool_name in valid_pools:
             if pool_name == 'Arete':
                 pool_value = character.db.stats.get('other', {}).get('advantage', {}).get('Arete', {}).get('perm', 0)
+                temp_value = character.db.stats.get('other', {}).get('advantage', {}).get('Arete', {}).get('temp', pool_value)
             else:
                 pool_value = character.db.stats.get('pools', {}).get('dual', {}).get(pool_name, {}).get('perm', 0)
-            temp_value = character.db.stats.get('pools', {}).get('dual', {}).get(pool_name, {}).get('temp', 0)
-            advantages.append(format_stat(pool_name, pool_value, tempvalue=temp_value))
+                temp_value = character.db.stats.get('pools', {}).get('dual', {}).get(pool_name, {}).get('temp', pool_value)
+            
+            advantages.append(format_stat(f"{pool_name}", pool_value, tempvalue=temp_value))
 
         # Add Renown for Shifters
         if character_splat.lower() == "shifter":

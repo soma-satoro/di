@@ -1,33 +1,25 @@
 from evennia.utils.ansi import ANSIString
 
 def format_stat(stat, value, width=25, default=None, tempvalue=None):
-    # if there's no value and the default value is greater than 0 then use the default value.
-    if default is not None and value is None or value == 0 or value == "":
+    if default is not None and (value is None or value == 0 or value == ""):
         value = default
 
-    if not value or value == "" or value == 0 and not tempvalue:
-        value = default
+    stat_str = f" {stat}"
     
-    if not tempvalue:
-        tempvalue = value
-    # compare two strings
-    if  ANSIString(f"{value}").strip() != ANSIString(f"{tempvalue}").strip():
-        value = ANSIString(f"|h{value}|n(|w{tempvalue}|n)")
-
-    # A regex to see if the string starts with a bscktick
-
-    if ANSIString(f"{stat}").startswith("`"):
-        return ANSIString(f"|n|y {stat}").ljust(width -  len(ANSIString(value).strip()), ANSIString('|y.|n')) + f"|n|y{value}|n"
+    if stat == "Paradox":
+        # For Paradox, only show the temporary value
+        value_str = str(tempvalue)
+    elif stat == "Arete":
+        # For Arete, don't show temporary value
+        value_str = str(value)
+    elif tempvalue is not None and str(value).strip() != str(tempvalue).strip():
+        # For other stats, show both permanent and temporary values if they differ
+        value_str = f"{value}({tempvalue})"
     else:
-        if value == default and default == 0 or value == default and default == "":
-            value = ANSIString(f"|n{value}|n")
-            stat = ANSIString(f"|n{stat}|n")
-        else :
-            value = ANSIString(f"|w{value}|n")
-            stat = ANSIString(f"|w{stat}|n")
+        value_str = str(value)
 
-        return ANSIString(f" |w{stat}").ljust(width -  len(ANSIString(value).strip()), ANSIString('|h|x.|n')) + value
-
+    dots = "." * (width - len(stat_str) - len(value_str) - 1)
+    return f"{stat_str}{dots}{value_str}"
 
 def header(title, width=78,  color="|y", fillchar=ANSIString("|b-|n"), bcolor="|b"):
     return ANSIString.center(ANSIString(f"{bcolor}<|n {color} {title} |n{bcolor}>|n"), width=width, fillchar=ANSIString(fillchar)) + "\n"
