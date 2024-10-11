@@ -1,5 +1,5 @@
 from evennia.commands.default.muxcommand import MuxCommand
-from world.wod20th.models import SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN
+from world.wod20th.models import SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN, CLAN, MAGE_FACTION, MAGE_SPHERES, TRADITION, TRADITION_SUBFACTION, CONVENTION, METHODOLOGIES, NEPHANDI_FACTION, SEEMING, KITH, SEELIE_LEGACIES, UNSEELIE_LEGACIES, ARTS, REALMS
 from world.wod20th.models import Stat
 from evennia.utils.ansi import ANSIString
 from world.wod20th.utils.damage import format_damage, format_status, format_damage_stacked
@@ -50,34 +50,60 @@ class CmdSheet(MuxCommand):
         
         string += header("Identity", width=78, color="|y")
         
-        splat = character.get_stat('other', 'splat', 'Splat') or ''
+        common_stats = ['Full Name', 'Date of Birth', 'Concept']
+        splat = character.db.stats.get('other', {}).get('splat', {}).get('Splat', {}).get('perm', '')
         
-        # Common stats for all characters
-        common_stats = ['Full Name', 'Age', 'Concept', 'Nature', 'Demeanor']
-        
+        if splat.lower() == 'changeling':
+            common_stats += ['Seelie Legacy', 'Unseelie Legacy']
+        else:
+            common_stats += ['Nature', 'Demeanor']
+
         if splat.lower() == 'vampire':
-            valid_identity_stats = common_stats + ['Clan', 'Generation', 'Sire', 'Splat']
+            splat_specific_stats = ['Clan', 'Date of Embrace', 'Generation', 'Sire']
         elif splat.lower() == 'shifter':
-            shifter_type = character.get_stat('identity', 'lineage', 'Type')
-            valid_identity_stats = common_stats + ['Type'] + SHIFTER_IDENTITY_STATS.get(shifter_type, []) + ['Splat']
-        else:  # For other splats or unspecified
-            valid_identity_stats = common_stats + ['Splat']
+            shifter_type = character.db.stats.get('identity', {}).get('lineage', {}).get('Type', {}).get('perm', '')
+            splat_specific_stats = ['Type'] + SHIFTER_IDENTITY_STATS.get(shifter_type, [])
+        elif splat.lower() == 'mage':
+            splat_specific_stats = ['Essence', 'Mage Faction', 'Convention', 'Methodology']
+        elif splat.lower() == 'changeling':
+            splat_specific_stats = ['Kith', 'Seeming', 'House']
+        else:
+            splat_specific_stats = []
 
-        bio = []
-        for stat_name in valid_identity_stats:
-            if stat_name == 'Splat':
-                value = splat
+        all_stats = common_stats + splat_specific_stats + ['Splat']
+        
+        def format_stat_with_dots(stat, value, width=37):
+            stat_str = f" {stat}"
+            value_str = f"{value}"
+            dots = "." * (width - len(stat_str) - len(value_str) - 1)
+            return f"{stat_str}{dots}{value_str}"
+
+        for i in range(0, len(all_stats), 2):
+            left_stat = all_stats[i]
+            right_stat = all_stats[i+1] if i+1 < len(all_stats) else None
+
+            left_value = character.db.stats.get('identity', {}).get('personal', {}).get(left_stat, {}).get('perm', '')
+            if not left_value:
+                left_value = character.db.stats.get('identity', {}).get('lineage', {}).get(left_stat, {}).get('perm', '')
+            if not left_value:
+                left_value = character.db.stats.get('identity', {}).get('other', {}).get(left_stat, {}).get('perm', '')
+            if not left_value and left_stat == 'Splat':
+                left_value = character.db.stats.get('other', {}).get('splat', {}).get('Splat', {}).get('perm', '')
+
+            left_formatted = format_stat_with_dots(left_stat, left_value)
+
+            if right_stat:
+                right_value = character.db.stats.get('identity', {}).get('personal', {}).get(right_stat, {}).get('perm', '')
+                if not right_value:
+                    right_value = character.db.stats.get('identity', {}).get('lineage', {}).get(right_stat, {}).get('perm', '')
+                if not right_value:
+                    right_value = character.db.stats.get('identity', {}).get('other', {}).get(right_stat, {}).get('perm', '')
+                if not right_value and right_stat == 'Splat':
+                    right_value = character.db.stats.get('other', {}).get('splat', {}).get('Splat', {}).get('perm', '')
+                right_formatted = format_stat_with_dots(right_stat, right_value)
+                string += f"{left_formatted}  {right_formatted}\n"
             else:
-                value = character.get_stat('identity', 'lineage', stat_name) or ''
-            bio.append(format_stat(stat_name, value, default="", width=38))
-
-        # Split the bio list into two columns
-        bio1 = bio[:len(bio)//2]
-        bio2 = bio[len(bio)//2:]
-
-        # Combine the two columns
-        for b1, b2 in zip_longest(bio1, bio2, fillvalue=" " * 38):
-            string += f"{b1}  {b2}\n"
+                string += f"{left_formatted}\n"
 
         string += header("Attributes", width=78, color="|y")
         string += " " + divider("Physical", width=25, fillchar=" ") + " "
@@ -203,73 +229,104 @@ class CmdSheet(MuxCommand):
         print(f"Character splat: {character_splat}")
         print(f"Character stats: {character.db.stats}")
 
-        string += header("Other", width=78, color="|y")
-        string += divider("Merits", width=25, fillchar=" ", color="|b") + " "
-        string += divider("Pools", width=25, fillchar=" ", color="|b") + " " 
-        string += divider("Health & Status", width=25, fillchar=" ", color="|b") + "\n"
+        string += header("Advantages", width=78, color="|y")
+        
+        powers = []
+        advantages = []
+        status = []
 
-        merits = []
+        # Process powers based on character splat
+        if character_splat.lower() == 'vampire':
+            powers.append(divider("Disciplines", width=25, color="|b"))
+            disciplines = character.db.stats.get('powers', {}).get('discipline', {})
+            for discipline, values in disciplines.items():
+                discipline_value = values.get('perm', 0)
+                powers.append(format_stat(discipline, discipline_value, default=0))
+
+        elif character_splat.lower() == 'mage':
+            powers.append(divider("Spheres", width=25, color="|b"))
+            spheres = ['Correspondence', 'Entropy', 'Forces', 'Life', 'Matter', 'Mind', 'Prime', 'Spirit', 'Time']
+            for sphere in spheres:
+                sphere_value = character.db.stats.get('powers', {}).get('sphere', {}).get(sphere, {}).get('perm', 0)
+                powers.append(format_stat(sphere, sphere_value, default=0))
+
+        elif character_splat.lower() == 'changeling':
+            powers.append(divider("Arts", width=25, color="|b"))
+            arts = character.db.stats.get('powers', {}).get('art', {})
+            for art, values in arts.items():
+                art_value = values.get('perm', 0)
+                powers.append(format_stat(art, art_value, default=0))
+
+            powers.append(" " * 25)
+            powers.append(divider("Realms", width=25, color="|b"))
+            realms = character.db.stats.get('powers', {}).get('realm', {})
+            for realm, values in realms.items():
+                realm_value = values.get('perm', 0)
+                powers.append(format_stat(realm, realm_value, default=0))
+
+        elif character_splat.lower() == 'shifter':
+            powers.append(divider("Gifts", width=25, color="|b"))
+            gifts = character.db.stats.get('powers', {}).get('gift', {})
+            for gift, values in gifts.items():
+                gift_value = values.get('perm', 0)
+                powers.append(format_stat(gift, gift_value, default=0))
+
+        # Process merits, flaws, and other advantages
+        advantages.append(divider("Merits & Flaws", width=25, color="|b"))
         for category, merits_dict in character.db.stats.get('merits', {}).items():
             for merit, values in merits_dict.items():
-                merits.append(format_stat(merit, values['perm']))
+                advantages.append(format_stat(merit, values['perm']))
 
-        flaws = []
         for category, flaws_dict in character.db.stats.get('flaws', {}).items():
             for flaw, values in flaws_dict.items():
-                flaws.append(format_stat(flaw, values['perm']))
-        
-        if flaws:
-            merits.append(" " * 25)
-            merits.append(divider("Flaws", width=25))
-            merits.extend(flaws)
+                advantages.append(format_stat(flaw, values['perm']))
 
-        health = format_damage_stacked(character)
-
-        print("About to process pools")
-        # Show appropriate pools
-        pools = []
+        # Process pools
+        advantages.append(" " * 25)
+        advantages.append(divider("Pools", width=25, color="|b"))
         valid_pools = ['Willpower']
         if character_splat.lower() == 'vampire':
             valid_pools.extend(['Blood', 'Road'])
         elif character_splat.lower() == 'shifter':
             valid_pools.extend(['Rage', 'Gnosis'])
-
-        print(f"Valid pools: {valid_pools}")
+        elif character_splat.lower() == 'mage':
+            valid_pools.extend(['Arete', 'Quintessence', 'Paradox'])
+        elif character_splat.lower() == 'changeling':
+            valid_pools.extend(['Glamour', 'Banality'])
 
         for pool_name in valid_pools:
-            pool_value = character.get_stat('pools', 'dual', pool_name) or 0
-            pools.append(format_stat(pool_name, pool_value, 
-                         tempvalue=character.get_stat('pools', 'dual', pool_name, temp=True)))
-
-        print(f"Pools after processing: {pools}")
+            if pool_name == 'Arete':
+                pool_value = character.db.stats.get('other', {}).get('advantage', {}).get('Arete', {}).get('perm', 0)
+            else:
+                pool_value = character.db.stats.get('pools', {}).get('dual', {}).get(pool_name, {}).get('perm', 0)
+            temp_value = character.db.stats.get('pools', {}).get('dual', {}).get(pool_name, {}).get('temp', 0)
+            advantages.append(format_stat(pool_name, pool_value, tempvalue=temp_value))
 
         # Add Renown for Shifters
         if character_splat.lower() == "shifter":
-            print("Processing Shifter Renown")
-            shifter_type = character.get_stat('identity', 'lineage', 'Type')
-            print(f"Shifter Type: {shifter_type}")
+            advantages.append(" " * 25)
+            advantages.append(divider("Renown", width=25, color="|b"))
+            shifter_type = character.get_stat('identity', 'lineage', 'Type', 'perm')
             renown_types = SHIFTER_RENOWN.get(shifter_type, [])
-            print(f"Renown Types: {renown_types}")
-            if renown_types:
-                pools.append(" " * 25)
-                pools.append(divider("Renown", width=25, color="|b"))  # Change color to blue here
-                for renown_type in renown_types:
-                    renown_value = character.get_stat('advantages', 'renown', renown_type) or 0
-                    print(f"Renown {renown_type}: {renown_value}")
-                    pools.append(format_stat(renown_type, renown_value, default=0))  # Add default=0 here
+            for renown_type in renown_types:
+                renown_value = character.get_stat('advantages', 'renown', renown_type, 'perm') or 0
+                advantages.append(format_stat(renown_type, renown_value, default=0))
 
-        print(f"Final pools: {pools}")
+        # Process health
+        status.append(divider("Health & Status", width=25, color="|b"))
+        status.extend(format_damage_stacked(character))
 
-        max_len = max(len(merits), len(pools), len(health))
-        while len(merits) < max_len:
-            merits.append(" " * 25)
-        while len(pools) < max_len:
-            pools.append(" " * 25)
-        while len(health) < max_len:
-            health.append(" " * 25)
+        # Combine powers, advantages, and status
+        max_len = max(len(powers), len(advantages), len(status))
+        while len(powers) < max_len:
+            powers.append(" " * 25)
+        while len(advantages) < max_len:
+            advantages.append(" " * 25)
+        while len(status) < max_len:
+            status.append(" " * 25)
 
-        for merit, pool, health in zip(merits, pools, health):
-            string += f"{merit} {pool} {health}\n"
+        for power, advantage, status_line in zip(powers, advantages, status):
+            string += f"{power} {advantage} {status_line}\n"
 
         if not character.db.approved:
             string += footer()

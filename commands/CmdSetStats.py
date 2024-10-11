@@ -1,5 +1,6 @@
 from evennia import default_cmds
 from world.wod20th.models import Stat, SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN
+from evennia.utils import search
 
 # Define the allowed identity stats for each shifter type
 SHIFTER_IDENTITY_STATS = {
@@ -123,9 +124,12 @@ class CmdStats(default_cmds.MuxCommand):
 
         # Fetch the stat definition from the database
         try:
-            if self.category:
-                matching_stats = Stat.objects.filter(name__icontains=self.stat_name.strip(), category__iexact=self.category.strip())
+            if self.stat_name.lower() in ['nature', 'demeanor']:
+                matching_stats = Stat.objects.filter(name=self.stat_name, category='identity', stat_type='personal')
             else:
+                matching_stats = Stat.objects.filter(name__iexact=self.stat_name.strip())
+            
+            if not matching_stats.exists():
                 matching_stats = Stat.objects.filter(name__icontains=self.stat_name.strip())
         except Exception as e:
             self.caller.msg(f"|rError fetching stats: {e}|n")
@@ -136,10 +140,16 @@ class CmdStats(default_cmds.MuxCommand):
             return
 
         if len(matching_stats) > 1:
-            self.caller.msg(f"|rMultiple stats matching '{self.stat_name}' found: {[stat.name for stat in matching_stats]}. Please be more specific.|n")
-            return
+            # If multiple matches and one of them is 'Seelie Legacy', use that
+            seelie_legacy = matching_stats.filter(name='Seelie Legacy').first()
+            if seelie_legacy:
+                stat = seelie_legacy
+            else:
+                self.caller.msg(f"|rMultiple stats matching '{self.stat_name}' found: {[stat.name for stat in matching_stats]}. Please be more specific.|n")
+                return
+        else:
+            stat = matching_stats.first()
 
-        stat = matching_stats.first()
         full_stat_name = stat.name
 
         # Check if the stat is instanced and handle accordingly
@@ -248,12 +258,16 @@ class CmdStats(default_cmds.MuxCommand):
             self.caller.msg(f"|gAlso updated {character.name}'s temporary Willpower pool to {new_value}.|n")
             character.msg(f"|gYour temporary Willpower pool has also been set to {new_value}.|n")
 
-        # If the stat is 'Splat', apply the correct pools
+        # If the stat is 'Splat', apply the correct pools and bio stats
         if full_stat_name == 'Splat':
             self.apply_splat_pools(character, new_value)
 
+        # If the stat is 'Mage Faction', apply the correct subfaction stats
+        if full_stat_name == 'Mage Faction':
+            self.apply_mage_faction_stats(character, new_value)
+
     def apply_splat_pools(self, character, splat):
-        """Apply the correct pools based on the character's splat."""
+        """Apply the correct pools and bio stats based on the character's splat."""
         # Remove all existing pools except Willpower
         character.db.stats['pools'] = {k: v for k, v in character.db.stats.get('pools', {}).items() if k == 'Willpower'}
 
@@ -263,19 +277,95 @@ class CmdStats(default_cmds.MuxCommand):
             character.set_stat('pools', 'dual', 'Willpower', 1, temp=True)
 
         if splat.lower() == 'vampire':
-            # Add Vampire-specific pools
-            character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
-            character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
-            character.set_stat('pools', 'moral', 'Road', 7, temp=False)
+            self.apply_vampire_stats(character)
         elif splat.lower() == 'shifter':
-            # Add default Shifter pools (will be adjusted in apply_shifter_pools if necessary)
-            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
-            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
-            character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
-            character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
+            self.apply_shifter_stats(character)
+        elif splat.lower() == 'mage':
+            self.apply_mage_stats(character)
+        elif splat.lower() == 'changeling':
+            self.apply_changeling_stats(character)
 
-        self.caller.msg(f"|gApplied default pools for {splat} to {character.name}.|n")
-        character.msg(f"|gYour default pools for {splat} have been applied.|n")
+        self.caller.msg(f"|gApplied default stats for {splat} to {character.name}.|n")
+        character.msg(f"|gYour default stats for {splat} have been applied.|n")
+
+    def apply_vampire_stats(self, character):
+        # Add Vampire-specific pools
+        character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
+        character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
+        character.set_stat('pools', 'moral', 'Road', 7, temp=False)
+
+    def apply_shifter_stats(self, character):
+        # Add Shifter-specific pools
+        character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
+        character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
+        character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
+        character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
+
+    def apply_mage_stats(self, character):
+        # Add Mage-specific pools
+        character.set_stat('pools', 'dual', 'Quintessence', 1, temp=False)
+        character.set_stat('pools', 'dual', 'Quintessence', 1, temp=True)
+        character.set_stat('pools', 'dual', 'Paradox', 0, temp=False)
+        character.set_stat('pools', 'dual', 'Paradox', 0, temp=True)
+        character.set_stat('other', 'advantage', 'Arete', 1, temp=False)
+
+        # Add Mage-specific bio stats
+        character.set_stat('identity', 'lineage', 'Essence', '')
+        character.set_stat('identity', 'lineage', 'Mage Faction', '')
+
+    def apply_changeling_stats(self, character):
+        # Add Changeling-specific pools
+        character.set_stat('pools', 'dual', 'Glamour', 1, temp=False)
+        character.set_stat('pools', 'dual', 'Glamour', 1, temp=True)
+        character.set_stat('pools', 'dual', 'Banality', 5, temp=False)
+        character.set_stat('pools', 'dual', 'Banality', 5, temp=True)
+
+        # Add Changeling-specific bio stats
+        character.set_stat('identity', 'lineage', 'Kith', '')
+        character.set_stat('identity', 'lineage', 'Seeming', '')
+        character.set_stat('identity', 'lineage', 'House', '')
+        character.set_stat('identity', 'lineage', 'Seelie Legacy', '')
+        character.set_stat('identity', 'lineage', 'Unseelie Legacy', '')
+
+        # Remove the generic 'Legacy' stat if it exists
+        if 'Legacy' in character.db.stats.get('identity', {}).get('lineage', {}):
+            del character.db.stats['identity']['lineage']['Legacy']
+
+        # Ensure these stats are added to the database if they don't exist
+        for stat_name in ['Kith', 'Seeming', 'House', 'Seelie Legacy', 'Unseelie Legacy']:
+            stat, created = Stat.objects.get_or_create(
+                name=stat_name,
+                defaults={
+                    'description': f'{stat_name} for Changelings',
+                    'game_line': 'Changeling: The Dreaming',
+                    'category': 'identity',
+                    'stat_type': 'lineage',
+                    'splat': 'Changeling'
+                }
+            )
+            if created:
+                self.caller.msg(f"|gCreated new stat: {stat_name}|n")
+
+        self.caller.msg(f"|gApplied Changeling-specific stats to {character.name}.|n")
+        character.msg(f"|gYour Changeling-specific stats have been applied.|n")
+
+    def apply_mage_faction_stats(self, character, faction):
+        if faction.lower() == 'traditions':
+            character.set_stat('identity', 'lineage', 'Tradition', '')
+            character.set_stat('identity', 'lineage', 'Traditions Subfaction', '')
+        elif faction.lower() == 'technocracy':
+            character.set_stat('identity', 'lineage', 'Convention', '')
+            character.set_stat('identity', 'lineage', 'Methodology', '')
+        elif faction.lower() == 'nephandi':
+            character.set_stat('identity', 'lineage', 'Nephandi Faction', '')
+
+        # Remove any stats that don't apply to the new faction
+        for stat in ['Tradition', 'Traditions Subfaction', 'Convention', 'Methodology', 'Nephandi Faction']:
+            if stat not in character.db.stats.get('identity', {}).get('lineage', {}):
+                character.db.stats['identity']['lineage'].pop(stat, None)
+
+        self.caller.msg(f"|gApplied {faction} specific stats to {character.name}.|n")
+        character.msg(f"|gYour {faction} specific stats have been applied.|n")
 
     def apply_shifter_pools(self, character, shifter_type):
         """Apply the correct pools and renown based on the Shifter's type."""
@@ -310,31 +400,6 @@ class CmdStats(default_cmds.MuxCommand):
 
         self.caller.msg(f"|gApplied specific pools and renown for {shifter_type} to {character.name}.|n")
         character.msg(f"|gYour specific pools and renown for {shifter_type} have been applied.|n")
-
-    def apply_splat_pools(self, character, splat):
-        """Apply the correct pools based on the character's splat."""
-        # Remove all existing pools except Willpower
-        character.db.stats['pools'] = {k: v for k, v in character.db.stats.get('pools', {}).items() if k == 'Willpower'}
-
-        # Add Willpower for all characters if it doesn't exist
-        if 'Willpower' not in character.db.stats['pools']:
-            character.set_stat('pools', 'dual', 'Willpower', 1, temp=False)
-            character.set_stat('pools', 'dual', 'Willpower', 1, temp=True)
-
-        if splat.lower() == 'vampire':
-            # Add Vampire-specific pools
-            character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
-            character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
-            character.set_stat('pools', 'moral', 'Road', 7, temp=False)
-        elif splat.lower() == 'shifter':
-            # Add Shifter-specific pools
-            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=False)
-            character.set_stat('pools', 'dual', 'Gnosis', 1, temp=True)
-            character.set_stat('pools', 'dual', 'Rage', 1, temp=False)
-            character.set_stat('pools', 'dual', 'Rage', 1, temp=True)
-
-        self.caller.msg(f"|gApplied default pools for {splat} to {character.name}.|n")
-        character.msg(f"|gYour default pools for {splat} have been applied.|n")
 
 from evennia.commands.default.muxcommand import MuxCommand
 from world.wod20th.models import Stat

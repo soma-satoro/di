@@ -16,8 +16,16 @@
         "values": ["Vampire", "Shifter", "Mortal", "Mage", "Changeling"]
     },
         {
-        "name": "Age",
-        "description": "The character's age.",
+        "name": "Date of Birth",
+        "description": "The character's DoB.",
+        "game_line": "Vampire: The Masquerade",
+        "category": "identity",
+        "stat_type": "personal",
+        "values": []
+    },
+    {
+        "name": "Date of Embrace",
+        "description": "The character's DoE.",
         "game_line": "Vampire: The Masquerade",
         "category": "identity",
         "stat_type": "personal",

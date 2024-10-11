@@ -19,6 +19,7 @@ CATEGORIES = [
     ('traits', 'Traits'),
     ('identity', 'Identity'),
     ('virtues', 'Virtues'),
+    ('legacies', 'Legacies'),
     ('pools', 'Pools'),
     ('other', 'Other')
 ]
@@ -37,6 +38,9 @@ STAT_TYPES = [
     ('splat', 'Splat'),
     ('edge', 'Edge'),
     ('discipline', 'Discipline'),
+    ('realm', 'Realm'),
+    ('sphere', 'Sphere'),
+    ('art', 'Art'),
     ('path', 'Path'),
     ('power', 'Power'),
     ('other', 'Other'),
@@ -63,6 +67,17 @@ STAT_TYPES = [
     ('temporary', 'Temporary'),
     ('dual', 'Dual'),
     ('renown', 'Renown'),
+    ('arete', 'Arete'),
+    ('banality', 'Banality'),
+    ('glamour', 'Glamour'),
+    ('essence', 'Essence'),
+    ('quintessence', 'Quintessence'),
+    ('paradox', 'Paradox'),
+    ('kith', 'Kith'),
+    ('seeming', 'Seeming'),
+    ('house', 'House'),
+    ('seelie-legacy', 'Seelie Legacy'),
+    ('unseelie-legacy', 'Unseelie Legacy')
 ]
 
 class Stat(models.Model):
@@ -166,6 +181,10 @@ MAGE_FACTION = {
     'Traditions', 'Technocracy', 'Nephandi'
 }
 
+MAGE_SPHERES = {
+    'Correspondence', 'Entropy', 'Forces', 'Life', 'Matter', 'Mind', 'Prime', 'Spirit', 'Time'
+}
+
 TRADITION = {
     'Cultists of Ecstasy', 'Euthanatos', 'Celestial Chorus', 'Akashic Brotherhood',
     'Dreamspeakers', 'Virtual Adepts', 'Order of Hermes', 'Verbena',
@@ -260,4 +279,23 @@ SEEMING = {
 KITH = {
     'Boggan', 'Clurichaun', 'Eshu', 'Nocker', 'Piskie', 'Pooka', 'Redcap', 'Satyr', 
     'Selkie', 'Arcadian Sidhe', 'Autumn Sidhe', 'Sluagh', 'Troll'
+}
+
+SEELIE_LEGACIES = {
+    'Bumpkin', 'Courtier', 'Crafter', 'Dandy', 'Hermit', 'Orchid', 'Paladin', 'Panderer', 
+    'Regent', 'Sage', 'Saint', 'Squire', 'Troubadour', 'Wayfarer'
+}
+
+UNSEELIE_LEGACIES = {
+    'Beast', 'Fatalist', 'Fool', 'Grotesque', 'Knave', 'Outlaw', 'Pandora', 'Peacock', 'Rake', 'Riddler', 
+    'Ringleader', 'Rogue', 'Savage', 'Wretch'
+}
+
+ARTS = {
+    'Autumn', 'Chicanery', 'Chronos', 'Contract', 'Dragon’s Ire', 'Legerdemain', 'Metamorphosis', 'Naming', 
+    'Oneiromancy', 'Primal', 'Pyretics', 'Skycraft', 'Soothsay', 'Sovereign', 'Spring', 'Summer', 'Wayfare', 'Winter'
+}
+
+REALMS = {
+    'Actor', 'Fae', 'Nature', 'Prop', 'Scene', 'Time'
 }
