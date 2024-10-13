@@ -1,8 +1,9 @@
 from evennia import default_cmds
 from evennia.utils import ansi
+from commands.CmdPose import PoseBreakMixin
 import re
 
-class CmdEmit(default_cmds.MuxCommand):
+class CmdEmit(PoseBreakMixin, default_cmds.MuxCommand):
     """
     @emit - Send a message to the room without your name attached.
 
@@ -27,6 +28,13 @@ class CmdEmit(default_cmds.MuxCommand):
     locks = "cmd:all()"
     help_category = "Storytelling"
 
+    def process_special_characters(self, message):
+        """
+        Process %r and %t in the message, replacing them with appropriate ANSI codes.
+        """
+        message = message.replace('%r', '|/').replace('%t', '|-')
+        return message
+
     def func(self):
         """Execute the @emit command"""
         caller = self.caller
@@ -35,13 +43,19 @@ class CmdEmit(default_cmds.MuxCommand):
             caller.msg("Usage: @emit <message>")
             return
 
+        # Send pose break before processing the message
+        self.send_pose_break()
+
+        # Process special characters in the message
+        processed_args = self.process_special_characters(self.args)
+
         # Check if the language switch is used
         use_language = 'language' in self.switches
 
         # Get the character's speaking language
         speaking_language = caller.get_speaking_language()
 
-        message = self.args.strip()
+        message = processed_args.strip()
 
         def process_speech(match):
             content = match.group(1)

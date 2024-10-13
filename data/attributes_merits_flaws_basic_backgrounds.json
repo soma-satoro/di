@@ -2,7 +2,7 @@
     {
         "name": "Strength",
         "description": "Physical power and muscle.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "physical",
         "values": [1, 2, 3, 4, 5],
@@ -11,7 +11,7 @@
     {
         "name": "Dexterity",
         "description": "Agility, reflexes, and coordination.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "physical",
         "values": [1, 2, 3, 4, 5],
@@ -20,7 +20,7 @@
     {
         "name": "Stamina",
         "description": "Endurance, health, and resilience.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "physical",
         "values": [1, 2, 3, 4, 5],
@@ -29,7 +29,7 @@
     {
         "name": "Charisma",
         "description": "Charm, personal magnetism, and influence.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "social",
         "values": [1, 2, 3, 4, 5],
@@ -38,7 +38,7 @@
     {
         "name": "Manipulation",
         "description": "Ability to influence and deceive.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "social",
         "values": [1, 2, 3, 4, 5],
@@ -47,7 +47,7 @@
     {
         "name": "Appearance",
         "description": "Physical attractiveness and ability to impress.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "social",
         "values": [1, 2, 3, 4, 5],
@@ -56,7 +56,7 @@
     {
         "name": "Perception",
         "description": "Awareness and ability to notice details.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "mental",
         "values": [1, 2, 3, 4, 5],
@@ -65,7 +65,7 @@
     {
         "name": "Intelligence",
         "description": "Cognitive capacity and ability to learn.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "mental",
         "values": [1, 2, 3, 4, 5],
@@ -74,7 +74,7 @@
     {
         "name": "Wits",
         "description": "Quick thinking and mental agility.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "attributes",
         "stat_type": "mental",
         "values": [1, 2, 3, 4, 5],
@@ -82,8 +82,8 @@
     },
     {
         "name": "Allies",
-        "description": "Mortal confederates, usually family or friends.",
-        "game_line": "Vampire: The Masquerade",
+        "description": "Confederates, usually family or friends.",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5]
@@ -91,15 +91,15 @@
     {
         "name": "Contacts",
         "description": "The information sources the character possesses.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5]
     },
     {
         "name": "Fame",
-        "description": "How well-known the character is among mortals.",
-        "game_line": "Vampire: The Masquerade",
+        "description": "How well-known the character is among humans.",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5]
@@ -124,16 +124,16 @@
     },
     {
         "name": "Influence",
-        "description": "The character's political power within mortal society.",
-        "game_line": "Vampire: The Masquerade",
+        "description": "The character's political power within human society.",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5]
     },
     {
         "name": "Mentor",
-        "description": "The Kindred patron who advises and supports the character.",
-        "game_line": "Vampire: The Masquerade",
+        "description": "A patron who advises and supports the character.",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5],
@@ -142,7 +142,7 @@
     {
         "name": "Resources",
         "description": "Wealth, belongings, and income.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5]
@@ -150,7 +150,7 @@
     {
         "name": "Retainers",
         "description": "Followers, guards, and servants.",
-        "game_line": "Vampire: The Masquerade",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5],
@@ -158,28 +158,12 @@
     },
     {
         "name": "Status",
-        "description": "A measure of the character's standing in Kindred society.",
-        "game_line": "Vampire: The Masquerade",
+        "description": "A measure of the character's standing in a society, supernatural or otherwise.",
+        "game_line": "Various",
         "category": "backgrounds",
         "stat_type": "background",
         "values": [1, 2, 3, 4, 5],
         "splat": "Vampire"
-    },
-    {
-        "name": "Acute Sense",
-        "description": "One of your senses is exceptionally sharp, be it sight, hearing, smell, touch, or taste. The difficulties for all tasks involving the use of this particular sense are reduced by two. This Merit can be combined with the Discipline of Auspex to produce superhuman sensory acuity.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "physical",
-        "values": [1]
-    },
-    {
-        "name": "Ambidextrous",
-        "description": "You have a high degree of off-hand dexterity and can perform tasks with the 'wrong' hand at no penalty. The rules for taking multiple actions still apply, but you do not suffer a difficulty penalty if you use two weapons or are forced to use your off hand.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "physical",
-        "values": [1]
     },
     {
         "name": "Bruiser",
@@ -211,14 +195,6 @@
         "game_line": "Vampire: The Masquerade",
         "category": "merits",
         "stat_type": "physical",
-        "values": [1]
-    },
-    {
-        "name": "Friendly Face",
-        "description": "You have a face that inspires trust, giving you two extra dice on all appropriate Social rolls.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "social",
         "values": [1]
     },
     {
@@ -262,40 +238,8 @@
         "values": [2]
     },
     {
-        "name": "Eidetic Memory",
-        "description": "You can remember things seen and heard with perfect detail. You can automatically recall any sight or sound accurately.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "mental",
-        "values": [2]
-    },
-    {
-        "name": "Medium",
-        "description": "You possess the natural affinity to sense and hear spirits, ghosts, and shades. Though you cannot see them, you can hear them and speak to them when they are present.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "supernatural",
-        "values": [2]
-    },
-    {
         "name": "Calm Heart",
         "description": "You are naturally calm and well-composed, and you remain so even under pressure. You receive two extra dice to resist frenzy.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "mental",
-        "values": [3]
-    },
-    {
-        "name": "Iron Will",
-        "description": "When you are determined and your mind is set, nothing can thwart you from your goals. When you are affected by a Dominate power, you may spend a point of Willpower to shake off the effects completely.",
-        "game_line": "Vampire: The Masquerade",
-        "category": "merits",
-        "stat_type": "mental",
-        "values": [3]
-    },
-    {
-        "name": "Luck",
-        "description": "You were born lucky — or else the Devil looks after his own. Either way, once per game session you may re-roll three failed rolls.",
         "game_line": "Vampire: The Masquerade",
         "category": "merits",
         "stat_type": "mental",
@@ -350,7 +294,7 @@
         "values": [1]
     },
     {
-        "name": "Tic/Twitch",
+        "name": "Tic",
         "description": "You have some sort of repetitive motion that you make in times of stress, and it is a dead give-away as to your true emotional state. The difficulty of all rolls to detect your deception in such situations is reduced by two.",
         "game_line": "Vampire: The Masquerade",
         "category": "flaws",
@@ -474,7 +418,7 @@
     },
     {
         "name": "Friendly Face",
-        "description": "You have a face strangers are inclined to trust. The effect doesn't fade even if you attempt self-deprecation, leaving you at –2 difficulty on all appropriate Social rolls (yes for first impressions, no for Intimidation, for example) when a stranger is involved. This Merit only functions on a first meeting.",
+        "description": "You have a face strangers are inclined to trust. The effect doesn't fade even if you attempt self-deprecation, leaving you at -2 difficulty on all appropriate Social rolls (yes for first impressions, no for Intimidation, for example) when a stranger is involved. This Merit only functions on a first meeting.",
         "game_line": "Various",
         "category": "merits",
         "stat_type": "social",
@@ -482,7 +426,7 @@
     },
     {
         "name": "Good Listener",
-        "description": "Pooka excel at the ability to get others to open up to them; however, you are a master confidant. A word here, a gesture there, you crack people open like oysters and harvest their secrets like pearls. Your ability to listen makes others tell you their feelings, concerns, and hidden dreams. They don't know why they're telling you, but they usually feel better afterwards. All rolls related to obtaining information from others are at a –2 difficulty.",
+        "description": "Pooka excel at the ability to get others to open up to them; however, you are a master confidant. A word here, a gesture there, you crack people open like oysters and harvest their secrets like pearls. Your ability to listen makes others tell you their feelings, concerns, and hidden dreams. They don't know why they're telling you, but they usually feel better afterwards. All rolls related to obtaining information from others are at a -2 difficulty.",
         "game_line": "Changeling: The Dreaming",
         "category": "merits",
         "stat_type": "social",
@@ -555,7 +499,7 @@
     },
     {
         "name": "Protégé",
-        "description": "An important changeling once mentored you, and spoke glowingly of you to acquaintances. Others may be inclined to look favorably on you by dint of the recommendation; you are at –2 difficulty on Social rolls with all those who've heard good things about you.",
+        "description": "An important changeling once mentored you, and spoke glowingly of you to acquaintances. Others may be inclined to look favorably on you by dint of the recommendation; you are at -2 difficulty on Social rolls with all those who've heard good things about you.",
         "game_line": "Changeling: The Dreaming",
         "category": "merits",
         "stat_type": "social",
@@ -596,7 +540,7 @@
     },
     {
         "name": "Your Best Advocate",
-        "description": "You are especially convincing when telling tall tales about your exploits. You receive a –2 to your difficulty on Social rolls related to recounting your deeds, whether true or not.",
+        "description": "You are especially convincing when telling tall tales about your exploits. You receive a -2 to your difficulty on Social rolls related to recounting your deeds, whether true or not.",
         "game_line": "Various",
         "category": "merits",
         "stat_type": "social",
@@ -663,7 +607,7 @@
     },
     {
         "name": "Murderous Mien",
-        "description": "You have a face that is frighteningly intimidating. You receive a –2 difficulty on all Social rolls when intimidating others.",
+        "description": "You have a face that is frighteningly intimidating. You receive a -2 difficulty on all Social rolls when intimidating others.",
         "game_line": "Various",
         "category": "merits",
         "stat_type": "social",
@@ -688,7 +632,7 @@
     },
     {
         "name": "Nature's Child",
-        "description": "You are one with nature and beasts. You receive a –2 to your difficulty on rolls when dealing with nonsapient animals in their natural environment, whether training them, tracking them, or simply petting them. Changelings should take care relying on this Merit when dealing with chimera, however; some of them are much more intelligent than they appear.",
+        "description": "You are one with nature and beasts. You receive a -2 to your difficulty on rolls when dealing with nonsapient animals in their natural environment, whether training them, tracking them, or simply petting them. Changelings should take care relying on this Merit when dealing with chimera, however; some of them are much more intelligent than they appear.",
         "game_line": "Various",
         "category": "merits",
         "stat_type": "social",
@@ -739,7 +683,7 @@
     },
     {
         "name": "Scholar of Others",
-        "description": "You have taken the time to learn about and specialize in one particular group outside your kith or Court. You are aware of at least some of the group's customs, strategies, and long-term goals, and can put that knowledge to good use. This Merit is worth a –2 difficulty for all non-combat rolls pertaining specifically to the subject of your specialization. On the other hand, you are at a +1 difficulty when it comes to dealing with other groups, simply because you are so thoroughly focused on your field. This Merit can be taken multiple times for multiple groups.",
+        "description": "You have taken the time to learn about and specialize in one particular group outside your kith or Court. You are aware of at least some of the group's customs, strategies, and long-term goals, and can put that knowledge to good use. This Merit is worth a -2 difficulty for all non-combat rolls pertaining specifically to the subject of your specialization. On the other hand, you are at a +1 difficulty when it comes to dealing with other groups, simply because you are so thoroughly focused on your field. This Merit can be taken multiple times for multiple groups.",
         "game_line": "Changeling: The Dreaming",
         "category": "merits",
         "stat_type": "mental",
@@ -766,7 +710,7 @@
     },
     {
         "name": "Voice of a Songbird",
-        "description": "The satyrs say your voice could charm apples from the trees. You have perfect pitch and can sing a cappella without missing a single note or going off key. Even when only speaking, your voice has a seductive quality that attracts people to you. Whenever you make a roll that involves inspirational speaking or singing, you are at a –2 difficulty.",
+        "description": "The satyrs say your voice could charm apples from the trees. You have perfect pitch and can sing a cappella without missing a single note or going off key. Even when only speaking, your voice has a seductive quality that attracts people to you. Whenever you make a roll that involves inspirational speaking or singing, you are at a -2 difficulty.",
         "game_line": "Various",
         "category": "merits",
         "stat_type": "social",
@@ -831,7 +775,7 @@
     },
     {
         "name": "Rising Star",
-        "description": "You are one of the up-and-comers in the freehold. Everyone wants to know you and be your friend, even as those in power groom you for positions of greater responsibility. You are at a –3 difficulty on all social rolls against any changelings who aren't actively opposing your ascent.",
+        "description": "You are one of the up-and-comers in the freehold. Everyone wants to know you and be your friend, even as those in power groom you for positions of greater responsibility. You are at a -3 difficulty on all social rolls against any changelings who aren't actively opposing your ascent.",
         "game_line": "Changeling: The Dreaming",
         "category": "merits",
         "stat_type": "social",

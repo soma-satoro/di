@@ -12,11 +12,16 @@ def format_stat(stat, value, width=25, default=None, tempvalue=None):
     elif stat == "Arete":
         # For Arete, don't show temporary value
         value_str = str(value)
-    elif tempvalue is not None and str(value).strip() != str(tempvalue).strip():
-        # For other stats, show both permanent and temporary values if they differ
+    elif tempvalue is not None and str(value).strip() != str(tempvalue).strip() and tempvalue != 0:
+        # For other stats, show both permanent and temporary values if they differ and temp is not 0
         value_str = f"{value}({tempvalue})"
     else:
         value_str = str(value)
+
+    # Truncate the stat name if it's too long
+    max_stat_length = width - len(value_str) - 4  # 4 for the dots and spaces
+    if len(stat_str) > max_stat_length:
+        stat_str = stat_str[:max_stat_length-3] + "..." 
 
     dots = "." * (width - len(stat_str) - len(value_str) - 1)
     return f"{stat_str}{dots}{value_str}"
@@ -64,4 +69,5 @@ def divider(title, width=78, fillchar="-", color="|r", text_color="|n"):
         # If no title, just create a line of fillchars
         inner_content = colored_fillchar * width
 
-    return ANSIString(f"{inner_content}|n")
+    # Remove any trailing whitespace and add the color terminator
+    return ANSIString(f"{inner_content.rstrip()}|n")

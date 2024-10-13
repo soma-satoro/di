@@ -1,5 +1,5 @@
 from evennia import default_cmds
-from world.wod20th.models import Stat, SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN
+from world.wod20th.models import Stat, SHIFTER_IDENTITY_STATS, SHIFTER_RENOWN, calculate_willpower, calculate_road
 from evennia.utils import search
 
 # Define the allowed identity stats for each shifter type
@@ -236,6 +236,14 @@ class CmdStats(default_cmds.MuxCommand):
             self.caller.msg(f"|rValue '{new_value}' is not valid for stat '{full_stat_name}'. Valid values are: {valid_values}|n")
             return
 
+        # Convert value to integer for virtues
+        if full_stat_name in ['Courage', 'Self-Control', 'Conscience', 'Conviction', 'Instinct']:
+            try:
+                new_value = int(new_value)
+            except ValueError:
+                self.caller.msg(f"|rInvalid value for {full_stat_name}. Please provide an integer.|n")
+                return
+
         # Update the stat
         character.set_stat(stat.category, stat.stat_type, full_stat_name, new_value, temp=False)
         
@@ -266,6 +274,64 @@ class CmdStats(default_cmds.MuxCommand):
         if full_stat_name == 'Mage Faction':
             self.apply_mage_faction_stats(character, new_value)
 
+        # After setting a stat, recalculate Willpower and Road
+        if full_stat_name in ['Courage', 'Self-Control', 'Conscience', 'Conviction', 'Instinct', 'Enlightenment']:
+            new_willpower = calculate_willpower(character)
+            character.set_stat('pools', 'dual', 'Willpower', new_willpower, temp=False)
+            character.set_stat('pools', 'dual', 'Willpower', new_willpower, temp=True)
+            self.caller.msg(f"|gRecalculated Willpower to {new_willpower}.|n")
+
+            # If Enlightenment is changed, update the virtues
+            if full_stat_name == 'Enlightenment':
+                self.update_virtues_for_enlightenment(character)
+
+            new_road = calculate_road(character)
+            character.set_stat('pools', 'moral', 'Road', new_road, temp=False)
+            self.caller.msg(f"|gRecalculated Road to {new_road}.|n")
+
+    def update_virtues_for_enlightenment(self, character):
+        enlightenment = character.get_stat('identity', 'personal', 'Enlightenment', temp=False)
+        path_virtues = {
+            'Humanity': ['Conscience', 'Self-Control', 'Courage'],
+            'Night': ['Conviction', 'Instinct', 'Courage'],
+            'Metamorphosis': ['Conviction', 'Instinct', 'Courage'],
+            'Beast': ['Conviction', 'Instinct', 'Courage'],
+            'Harmony': ['Conscience', 'Instinct', 'Courage'],
+            'Evil Revelations': ['Conviction', 'Self-Control', 'Courage'],
+            'Self-Focus': ['Conviction', 'Instinct', 'Courage'],
+            'Scorched Heart': ['Conviction', 'Self-Control', 'Courage'],
+            'Entelechy': ['Conviction', 'Self-Control', 'Courage'],
+            'Sharia El-Sama': ['Conscience', 'Self-Control', 'Courage'],
+            'Asakku': ['Conviction', 'Instinct', 'Courage'],
+            'Death and the Soul': ['Conviction', 'Self-Control', 'Courage'],
+            'Honorable Accord': ['Conscience', 'Self-Control', 'Courage'],
+            'Feral Heart': ['Conviction', 'Instinct', 'Courage'],
+            'Orion': ['Conviction', 'Instinct', 'Courage'],
+            'Power and the Inner Voice': ['Conviction', 'Instinct', 'Courage'],
+            'Lilith': ['Conviction', 'Instinct', 'Courage'],
+            'Caine': ['Conviction', 'Instinct', 'Courage'],
+            'Cathari': ['Conviction', 'Instinct', 'Courage'],
+            'Redemption': ['Conscience', 'Self-Control', 'Courage'],
+            'Bones': ['Conviction', 'Self-Control', 'Courage'],
+            'Typhon': ['Conviction', 'Self-Control', 'Courage'],
+            'Paradox': ['Conviction', 'Self-Control', 'Courage'],
+            'Blood': ['Conviction', 'Self-Control', 'Courage'],
+            'Hive': ['Conviction', 'Instinct', 'Courage']
+        }
+        
+        if enlightenment in path_virtues:
+            virtues = path_virtues[enlightenment]
+            
+            # Remove all existing virtues
+            character.db.stats['virtues']['moral'] = {}
+            
+            # Set new virtues
+            for virtue in virtues:
+                character.set_stat('virtues', 'moral', virtue, 1, temp=False)
+            
+            self.caller.msg(f"|gUpdated virtues for {enlightenment}: {', '.join(virtues)}.|n")
+        else:
+            self.caller.msg(f"|rUnknown path of enlightenment: {enlightenment}|n")
     def apply_splat_pools(self, character, splat):
         """Apply the correct pools and bio stats based on the character's splat."""
         # Remove all existing pools except Willpower
@@ -292,7 +358,24 @@ class CmdStats(default_cmds.MuxCommand):
         # Add Vampire-specific pools
         character.set_stat('pools', 'dual', 'Blood', 10, temp=False)
         character.set_stat('pools', 'dual', 'Blood', 10, temp=True)
-        character.set_stat('pools', 'moral', 'Road', 7, temp=False)
+        character.set_stat('pools', 'moral', 'Road', 1, temp=False)
+
+        # Set default Enlightenment to Humanity if not already set
+        enlightenment = character.get_stat('identity', 'personal', 'Enlightenment', temp=False)
+        if not enlightenment:
+            character.set_stat('identity', 'personal', 'Enlightenment', 'Humanity', temp=False)
+            enlightenment = 'Humanity'
+
+        # Set virtues based on Enlightenment
+        self.update_virtues_for_enlightenment(character)
+
+        # Recalculate Willpower and Road after setting virtues
+        new_willpower = calculate_willpower(character)
+        character.set_stat('pools', 'dual', 'Willpower', new_willpower, temp=False)
+        character.set_stat('pools', 'dual', 'Willpower', new_willpower, temp=True)
+
+        new_road = calculate_road(character)
+        character.set_stat('pools', 'moral', 'Road', new_road, temp=False)
 
     def apply_shifter_stats(self, character):
         # Add Shifter-specific pools

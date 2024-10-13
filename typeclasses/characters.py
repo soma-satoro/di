@@ -4,6 +4,7 @@ from evennia.utils.ansi import ANSIString
 from world.wod20th.models import Stat
 from evennia.utils import lazy_property
 from world.wod20th.models import Note
+from world.wod20th.utils.ansi_utils import wrap_ansi
 import re
 import random
 
@@ -239,6 +240,51 @@ class Character(BaseCharacter):
         self.msg("You step back into the material world.")
         self.location.msg_contents(f"{self.name} shimmers into view as they return from the Umbra.", exclude=self, from_obj=self)
         return True
+
+    def return_appearance(self, looker, **kwargs):
+        """
+        This formats a description for any object looking at this object.
+        """
+        if not looker:
+            return ""
+        
+        # Get the description
+        desc = self.db.desc
+
+        # Start with the name
+        string = f"|c{self.get_display_name(looker)}|n\n"
+
+        # Process character description
+        if desc:
+            # Replace both %t and |- with a consistent tab marker
+            desc = desc.replace('%t', '|t').replace('|-', '|t')
+            
+            paragraphs = desc.split('%r')
+            formatted_paragraphs = []
+            for p in paragraphs:
+                if not p.strip():
+                    formatted_paragraphs.append('')  # Add blank line for empty paragraph
+                    continue
+                
+                # Handle tabs manually
+                lines = p.split('|t')
+                indented_lines = [line.strip() for line in lines]
+                indented_text = '\n    '.join(indented_lines)
+                
+                # Wrap each line individually
+                wrapped_lines = [wrap_ansi(line, width=78) for line in indented_text.split('\n')]
+                formatted_paragraphs.append('\n'.join(wrapped_lines))
+            
+            # Join paragraphs with a single newline, and remove any consecutive newlines
+            joined_paragraphs = '\n'.join(formatted_paragraphs)
+            joined_paragraphs = re.sub(r'\n{3,}', '\n\n', joined_paragraphs)
+            
+            string += joined_paragraphs + "\n"
+
+        # Add any other details you want to include in the character's appearance
+        # For example, you might want to add information about their equipment, stats, etc.
+
+        return string
 
     def announce_move_from(self, destination, msg=None, mapping=None, **kwargs):
         """

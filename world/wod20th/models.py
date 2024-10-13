@@ -1,6 +1,8 @@
 # mygame/server/conf/models.py
+import re
 from django.db import models
 from django.db.models import JSONField  # Use the built-in JSONField
+from django.forms import ValidationError
 from evennia.locks.lockhandler import LockHandler
 from django.conf import settings
 from evennia.accounts.models import AccountDB
@@ -11,6 +13,7 @@ from evennia.utils.idmapper.models import SharedMemoryModel
 CATEGORIES = [
     ('attributes', 'Attributes'),
     ('abilities', 'Abilities'),
+    ('secondary_abilities', 'Secondary Abilities'),
     ('advantages', 'Advantages'),
     ('backgrounds', 'Backgrounds'),
     ('powers', 'Powers'),
@@ -18,8 +21,9 @@ CATEGORIES = [
     ('flaws', 'Flaws'),
     ('traits', 'Traits'),
     ('identity', 'Identity'),
+    ('archetype', 'Archetype'),
     ('virtues', 'Virtues'),
-    ('legacies', 'Legacies'),
+    ('legacy', 'Legacy'),
     ('pools', 'Pools'),
     ('other', 'Other')
 ]
@@ -27,6 +31,7 @@ CATEGORIES = [
 STAT_TYPES = [
     ('attribute', 'Attribute'),
     ('ability', 'Ability'),
+    ('secondary_ability', 'Secondary Ability'),
     ('advantage', 'Advantage'),
     ('background', 'Background'),
     ('lineage', 'Lineage'),
@@ -42,6 +47,7 @@ STAT_TYPES = [
     ('sphere', 'Sphere'),
     ('art', 'Art'),
     ('path', 'Path'),
+    ('enlightenment', 'Enlightenment'),
     ('power', 'Power'),
     ('other', 'Other'),
     ('virtue', 'Virtue'),
@@ -51,10 +57,10 @@ STAT_TYPES = [
     ('trait', 'Trait'),
     ('skill', 'Skill'),
     ('knowledge', 'Knowledge'),
-    ('knowlege-secondary', 'Secondary Knowledge'),
-    ('telent-secondary', 'Secondary Talent'),
-    ('skill-secondary', 'Secondary Skill'),
     ('talent', 'Talent'),
+    ('secondary_knowledge', 'Secondary Knowledge'),
+    ('secondary_talent', 'Secondary Talent'),
+    ('secondary_skill', 'Secondary Skill'),
     ('specialty', 'Specialty'),
     ('other', 'Other'),
     ('physical', 'Physical'),
@@ -63,7 +69,6 @@ STAT_TYPES = [
     ('personal', 'Personal'),
     ('supernatural', 'Supernatural'),
     ('moral', 'Moral'),
-    ('inhuman', 'Inhuman'),
     ('temporary', 'Temporary'),
     ('dual', 'Dual'),
     ('renown', 'Renown'),
@@ -139,8 +144,168 @@ class Note(SharedMemoryModel):
         unique_together = ('character', 'name')
 
 def calculate_willpower(character):
-    courage = character.db.stats.get("Courage", 1)  # Default to 1 if not set
-    return courage
+    courage = character.get_stat('virtues', 'moral', 'Courage', temp=False)
+    if courage is None:
+        # If Courage is not present, use the highest virtue
+        virtues = character.db.stats.get('virtues', {}).get('moral', {})
+        highest_virtue = max(virtues.values(), key=lambda x: x.get('perm', 0))
+        return highest_virtue.get('perm', 1)
+    return courage if courage is not None else 1
+
+def calculate_road(character):
+    enlightenment = character.get_stat('identity', 'personal', 'Enlightenment', temp=False)
+    virtues = character.db.stats.get('virtues', {}).get('moral', {})
+
+    path_virtues = {
+        'Humanity': ('Conscience', 'Self-Control'),
+        'Night': ('Conviction', 'Instinct'),
+        'Beast': ('Conviction', 'Instinct'),
+        'Harmony': ('Conscience', 'Instinct'),
+        'Evil Revelations': ('Conviction', 'Self-Control'),
+        'Self-Focus': ('Conviction', 'Instinct'),
+        'Scorched Heart': ('Conviction', 'Self-Control'),
+        'Entelechy': ('Conviction', 'Self-Control'),
+        'Sharia El-Sama': ('Conscience', 'Self-Control'),
+        'Asakku': ('Conviction', 'Instinct'),
+        'Death and the Soul': ('Conviction', 'Self-Control'),
+        'Honorable Accord': ('Conscience', 'Self-Control'),
+        'Feral Heart': ('Conviction', 'Instinct'),
+        'Orion': ('Conviction', 'Instinct'),
+        'Power and the Inner Voice': ('Conviction', 'Instinct'),
+        'Lilith': ('Conviction', 'Instinct'),
+        'Caine': ('Conviction', 'Instinct'),
+        'Cathari': ('Conviction', 'Instinct'),
+        'Redemption': ('Conscience', 'Self-Control'),
+        'Metamorphosis': ('Conviction', 'Instinct'),
+        'Bones': ('Conviction', 'Self-Control'),
+        'Typhon': ('Conviction', 'Self-Control'),
+        'Paradox': ('Conviction', 'Self-Control'),
+        'Blood': ('Conviction', 'Self-Control'),
+        'Hive': ('Conviction', 'Instinct')
+    }
+
+    if enlightenment in path_virtues:
+        virtue1, virtue2 = path_virtues[enlightenment]
+        value1 = virtues.get(virtue1, {}).get('perm', 0)
+        value2 = virtues.get(virtue2, {}).get('perm', 0)
+        return value1 + value2
+    else:
+        # If the enlightenment is not recognized, return 0 or a default value
+        return 0
+
+class ShapeshifterForm(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    shifter_type = models.CharField(max_length=50)
+    description = models.TextField(blank=True)
+    stat_modifiers = models.JSONField(default=dict, blank=True)
+    rage_cost = models.PositiveIntegerField(default=0)
+    difficulty = models.PositiveIntegerField(default=6)
+    lock_string = models.CharField(max_length=255, blank=True)
+    form_message = models.TextField(blank=True, help_text="Message to display when this form is assumed.")
+
+    class Meta:
+        verbose_name = "Shapeshifter Form"
+        verbose_name_plural = "Shapeshifter Forms"
+        ordering = ['shifter_type', 'name']
+
+    def __str__(self):
+        return f"{self.shifter_type.capitalize()} - {self.name}"
+
+    def clean(self):
+        # Validate stat_modifiers
+        if not isinstance(self.stat_modifiers, dict):
+            raise ValidationError({'stat_modifiers': 'Must be a dictionary'})
+        for key, value in self.stat_modifiers.items():
+            if not isinstance(key, str) or not isinstance(value, int):
+                raise ValidationError({'stat_modifiers': 'Keys must be strings and values must be integers'})
+
+        # Validate difficulty
+        if self.difficulty < 1 or self.difficulty > 10:
+            raise ValidationError({'difficulty': 'Difficulty must be between 1 and 10'})
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        self.shifter_type = self.sanitize_shifter_type(self.shifter_type)
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def sanitize_shifter_type(shifter_type):
+        # Convert to lowercase and remove any non-alphanumeric characters except spaces
+        sanitized = re.sub(r'[^\w\s]', '', shifter_type.lower())
+        # Replace spaces with underscores
+        return re.sub(r'\s+', '_', sanitized)
+
+class Asset(models.Model):
+    ASSET_TYPES = [
+        ('retainer', 'Retainer'),
+        ('haven', 'Haven'),
+        ('territory', 'Territory'),
+        ('contact', 'Contact'),
+    ]
+
+    name = models.CharField(max_length=100, unique=True)
+    asset_type = models.CharField(max_length=50, choices=ASSET_TYPES)
+    description = models.TextField(blank=True, null=True)
+    value = models.IntegerField(default=0)
+    owner_id = models.IntegerField()  # Store the owner's ID instead of a ForeignKey
+    status = models.CharField(max_length=50, default='Active')
+    traits = models.JSONField(default=dict, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_asset_type_display()})"
+
+    @property
+    def owner(self):
+        from typeclasses.characters import Character  # Local import
+        try:
+            return Character.objects.get(id=self.owner_id)
+        except Character.DoesNotExist:
+            return None
+
+
+class ActionTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
+    downtime_cost = models.IntegerField(default=0)  # Cost in downtime hours
+    requires_target = models.BooleanField(default=False)
+    category = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Action(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+
+    template = models.ForeignKey(ActionTemplate, on_delete=models.CASCADE)
+    character_id = models.IntegerField()  # Store the character's ID instead of a ForeignKey
+    target_asset = models.ForeignKey(Asset, null=True, blank=True, on_delete=models.SET_NULL, related_name='targeted_by_actions')
+    downtime_spent = models.IntegerField(default=0)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    result = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.character_id} - {self.template.name} targeting {self.target_asset} ({self.get_status_display()})"
+
+    @property
+    def character(self):
+        from typeclasses.characters import Character  # Local import
+        try:
+            return Character.objects.get(id=self.character_id)
+        except Character.DoesNotExist:
+            return None
+
+    def perform_action(self):
+        if self.status == 'pending':
+            # Implement the logic to resolve the action
+            self.status = 'completed'
+            self.result = "Action completed successfully."
+            self.save()
 
 SHIFTER_IDENTITY_STATS = {
     "Garou": ["Tribe", "Breed", "Auspice"],

@@ -106,7 +106,7 @@ class CmdRoll(default_cmds.MuxCommand):
         """
         Retrieve the value and full name of a stat for the character by searching the character's stats.
         Returns the closest matching stat if an exact match is not found.
-        Uses 'temp' value if available, otherwise defaults to 'perm'.
+        Uses 'temp' value if available and non-zero, otherwise uses 'perm'.
         """
         if not inherits_from(self.caller, "typeclasses.characters.Character"):
             self.caller.msg("Error: This command can only be used by characters.")
@@ -131,7 +131,12 @@ class CmdRoll(default_cmds.MuxCommand):
                 for stat_type, stats in cat_stats.items():
                     if closest_match in stats:
                         stat_data = stats[closest_match]
-                        value = stat_data.get('temp', stat_data.get('perm', 0))
+                        temp_value = stat_data.get('temp', 0)
+                        perm_value = stat_data.get('perm', 0)
+                        
+                        # Use temp value if it's non-zero, otherwise use perm value
+                        value = temp_value if temp_value != 0 else perm_value
+                        
                         try:
                             return int(value), closest_match
                         except ValueError:

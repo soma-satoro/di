@@ -1,8 +1,25 @@
-
 from evennia import default_cmds
 import re
 
-class CmdPose(default_cmds.MuxCommand):
+class PoseBreakMixin:
+    """
+    A mixin to add pose breaks before commands.
+    """
+    def send_pose_break(self, exclude=None):
+        pose_break = f"\n|y{'=' * 30}> |w{self.caller.name}|n |y<{'=' * 30}|n"
+        self.caller.location.msg_contents(pose_break, exclude=exclude)
+
+    def msg_contents(self, message, exclude=None, from_obj=None, **kwargs):
+        """
+        Custom msg_contents that adds a pose break before the message.
+        """
+        # Add the pose break
+        self.send_pose_break(exclude=exclude)
+
+        # Call the original msg_contents (pose/emit/say)
+        super().msg_contents(message, exclude=exclude, from_obj=from_obj, **kwargs)
+
+class CmdPose(PoseBreakMixin, default_cmds.MuxCommand):
     """
     Pose an action to the room, with support for mixed content and language tags.
     Usage:
@@ -36,11 +53,24 @@ class CmdPose(default_cmds.MuxCommand):
             # Remove space after semicolon if present
             self.args = self.args.lstrip()
 
+    def process_special_characters(self, message):
+        """
+        Process %r and %t in the message, replacing them with appropriate ANSI codes.
+        """
+        message = message.replace('%r', '|/').replace('%t', '|-')
+        return message
+
     def func(self):
         "Perform the pose"
         if not self.args:
             self.caller.msg("Pose what?")
             return
+
+        # Send pose break before processing the message
+        self.send_pose_break()
+
+        # Process special characters in the message
+        processed_args = self.process_special_characters(self.args)
 
         # Determine the name to use
         poser_name = self.caller.attributes.get('gradient_name', default=self.caller.key)
@@ -61,9 +91,9 @@ class CmdPose(default_cmds.MuxCommand):
         pose_parts_understand = []
         pose_parts_not_understand = []
         last_end = 0
-        for match in re.finditer(r'"(.*?)"', self.args):
-            pose_parts_understand.append(self.args[last_end:match.start()])
-            pose_parts_not_understand.append(self.args[last_end:match.start()])
+        for match in re.finditer(r'"(.*?)"', processed_args):
+            pose_parts_understand.append(processed_args[last_end:match.start()])
+            pose_parts_not_understand.append(processed_args[last_end:match.start()])
             
             understand, not_understand = process_speech(match)
             pose_parts_understand.append(understand)
@@ -71,8 +101,8 @@ class CmdPose(default_cmds.MuxCommand):
             
             last_end = match.end()
         
-        pose_parts_understand.append(self.args[last_end:])
-        pose_parts_not_understand.append(self.args[last_end:])
+        pose_parts_understand.append(processed_args[last_end:])
+        pose_parts_not_understand.append(processed_args[last_end:])
 
         pose_understand = "".join(pose_parts_understand)
         pose_not_understand = "".join(pose_parts_not_understand)

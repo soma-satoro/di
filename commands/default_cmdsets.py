@@ -36,6 +36,13 @@ from commands.communication import CmdMeet, CmdPlusIc, CmdPlusOoc, CmdOOC, CmdSu
 from commands.admin import CmdApprove, CmdUnapprove
 from commands.CmdPump import CmdPump
 from commands.CmdSpendGain import CmdSpendGain
+from commands.where import CmdWhere
+from commands.chargen import CmdCharGen
+from commands.CmdShift import CmdShift
+
+from commands.bbs.bbs_cmdset import BBSCmdSet
+from commands.oss.oss_cmdset import OssCmdSet
+
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -59,6 +66,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdStats())
         self.add(CmdEmit())
         self.add(BBSCmdSet)
+        self.add(OssCmdSet)
 
         self.add(CmdSpecialty())
         self.add(CmdSheet())
@@ -67,7 +75,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(mail.CmdMail())
         self.add(mail.CmdMailCharacter())
         self.add(CmdRoll())
-
+        self.add(CmdShift())
 
         self.add(CmdUmbraInteraction())
         self.add(CmdMeet())
@@ -76,7 +84,9 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdOOC())
         self.add(CmdPump())
         self.add(CmdSpendGain())
-        
+        self.add(CmdWhere())
+        self.add(CmdCharGen())
+
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is
