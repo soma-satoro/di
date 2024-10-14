@@ -69,10 +69,10 @@ class CmdSheet(MuxCommand):
             splat_specific_stats = ['Essence', 'Mage Faction']
             
             if mage_faction.lower() == 'traditions':
-                traditions = character.db.stats.get('identity', {}).get('lineage', {}).get('Traditions', {}).get('perm', '')
-                splat_specific_stats.extend(['Traditions'])
+                traditions = character.db.stats.get('identity', {}).get('lineage', {}).get('Tradition', {}).get('perm', '')
+                splat_specific_stats.extend(['Tradition'])
                 if traditions:
-                    splat_specific_stats.append('Traditions Subfaction')
+                        splat_specific_stats.append('Traditions Subfaction')
             elif mage_faction.lower() == 'technocracy':
                 splat_specific_stats.extend(['Convention', 'Methodology'])
             elif mage_faction.lower() == 'nephandi':

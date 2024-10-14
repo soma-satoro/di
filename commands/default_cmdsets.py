@@ -38,7 +38,9 @@ from commands.CmdPump import CmdPump
 from commands.CmdSpendGain import CmdSpendGain
 from commands.where import CmdWhere
 from commands.chargen import CmdCharGen
+from commands.CmdSelfStat import CmdSelfStat
 from commands.CmdShift import CmdShift
+from commands.CmdStaff import CmdStaff
 
 from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.oss.oss_cmdset import OssCmdSet
@@ -86,6 +88,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdSpendGain())
         self.add(CmdWhere())
         self.add(CmdCharGen())
+        self.add(CmdSelfStat())
+        self.add(CmdStaff())
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
