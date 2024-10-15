@@ -41,10 +41,13 @@ from commands.chargen import CmdCharGen
 from commands.CmdSelfStat import CmdSelfStat
 from commands.CmdShift import CmdShift
 from commands.CmdStaff import CmdStaff
-
+from commands.unfindable import CmdUnfindable
+from commands.CmdChangelingInteraction import CmdChangelingInteraction
 from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.oss.oss_cmdset import OssCmdSet
 from commands.CmdWeather import CmdWeather
+from commands.CmdFaeDesc import CmdFaeDesc
+from commands.CmdLook import CmdLook
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -69,6 +72,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdEmit())
         self.add(BBSCmdSet)
         self.add(OssCmdSet)
+        self.add(CmdFaeDesc())
 
         self.add(CmdSpecialty())
         self.add(CmdSheet())
@@ -79,6 +83,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdRoll())
         self.add(CmdShift())
         self.add(CmdWeather())
+        self.add(CmdChangelingInteraction())
+        self.add(CmdLook())
         
         self.add(CmdUmbraInteraction())
         self.add(CmdMeet())
@@ -91,6 +97,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdCharGen())
         self.add(CmdSelfStat())
         self.add(CmdStaff())
+        self.add(CmdUnfindable())
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
