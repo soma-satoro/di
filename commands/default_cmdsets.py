@@ -44,7 +44,7 @@ from commands.CmdStaff import CmdStaff
 
 from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.oss.oss_cmdset import OssCmdSet
-
+from commands.CmdWeather import CmdWeather
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -78,7 +78,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(mail.CmdMailCharacter())
         self.add(CmdRoll())
         self.add(CmdShift())
-
+        self.add(CmdWeather())
+        
         self.add(CmdUmbraInteraction())
         self.add(CmdMeet())
         self.add(CmdPlusIc())
