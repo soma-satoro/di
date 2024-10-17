@@ -17,6 +17,7 @@ class Request(SharedMemoryModel):
         ('WIKI', 'Wiki'),
         ('GENERAL', 'General'),
         ('INF', 'Influence'),
+        ('SPLAT', 'Splat'),
         ()
     ]
 

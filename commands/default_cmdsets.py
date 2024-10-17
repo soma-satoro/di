@@ -30,7 +30,7 @@ from commands.CmdEmit import CmdEmit
 from commands.CmdNotes import CmdNotes
 from commands.bbs.bbs_cmdset import BBSCmdSet
 from commands.building import CmdSetRoomResources, CmdSetRoomType, CmdSetUmbraDesc, CmdSetGauntlet, CmdUmbraInfo
-from commands.requests import CmdRequests
+#from commands.requests import CmdRequests
 from commands.CmdUmbraInteraction import CmdUmbraInteraction
 from commands.communication import CmdMeet, CmdPlusIc, CmdPlusOoc, CmdOOC, CmdSummon, CmdJoin
 from commands.admin import CmdApprove, CmdUnapprove
@@ -49,6 +49,7 @@ from commands.CmdWeather import CmdWeather
 from commands.CmdFaeDesc import CmdFaeDesc
 from commands.CmdLook import CmdLook
 from commands.CmdEvents import CmdEvents
+from commands.jobs.jobs_cmdset import JobSystemCmdSet
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -101,6 +102,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdSelfStat())
         self.add(CmdStaff())
         self.add(CmdUnfindable())
+        self.add(JobSystemCmdSet)
+
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
@@ -128,7 +131,7 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         self.add(CmdLanguage())
         self.add(CmdSay())
         self.add(CmdNotes())
-        self.add(CmdRequests())
+        #self.add(CmdRequests())
         self.add(CmdSummon())
         self.add(CmdJoin())
         self.add(CmdApprove())
