@@ -48,6 +48,8 @@ from commands.oss.oss_cmdset import OssCmdSet
 from commands.CmdWeather import CmdWeather
 from commands.CmdFaeDesc import CmdFaeDesc
 from commands.CmdLook import CmdLook
+from commands.CmdEvents import CmdEvents
+
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -78,6 +80,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdSheet())
         self.add(CmdHurt())
         self.add(CmdHeal())
+        self.add(CmdEvents())
         self.add(mail.CmdMail())
         self.add(mail.CmdMailCharacter())
         self.add(CmdRoll())
@@ -85,7 +88,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdWeather())
         self.add(CmdChangelingInteraction())
         self.add(CmdLook())
-        
+
         self.add(CmdUmbraInteraction())
         self.add(CmdMeet())
         self.add(CmdPlusIc())
