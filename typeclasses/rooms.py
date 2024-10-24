@@ -375,6 +375,10 @@ class RoomParent(DefaultRoom):
             self.db.roll_log = []  # Initialize an empty list for roll logs
             self.db.initialized = True  # Mark this room as initialized
             self.save()  # Save immediately to avoid ID-related issues
+        else:
+            # Ensure roll_log exists even for previously initialized rooms
+            if not hasattr(self.db, 'roll_log'):
+                self.db.roll_log = []
 
     def at_object_creation(self):
         """
@@ -530,7 +534,11 @@ class RoomParent(DefaultRoom):
         """
         Log a roll made in this room.
         """
-        self.initialize()
+        self.initialize()  # Ensure initialization
+        
+        # Ensure roll_log exists
+        if not hasattr(self.db, 'roll_log'):
+            self.db.roll_log = []
         
         # Use the game time if available, otherwise use the current system time
         if hasattr(self.db, 'gametime') and self.db.gametime is not None and hasattr(self.db.gametime, 'time'):
@@ -563,3 +571,6 @@ class RoomParent(DefaultRoom):
     def set_fae_description(self, description):
         """Set the fae description of the room."""
         self.db.fae_desc = description
+
+class Room(RoomParent):
+    pass

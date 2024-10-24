@@ -9,7 +9,7 @@ from django.db.models import Max
 # Remove this line:
 # from evennia.utils import create
 
-class Job(models.Model):
+class Job(SharedMemoryModel):
     id = models.AutoField(primary_key=True)
     archive_id = models.IntegerField(null=True, blank=True, unique=True)
     title = models.CharField(max_length=255)
@@ -28,6 +28,9 @@ class Job(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
     attached_objects = models.ManyToManyField(ObjectDB, through='JobAttachment', related_name="attached_jobs", blank=True)
     template = models.ForeignKey('JobTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
+
+    class Meta:
+        app_label = 'jobs'
 
     def claim(self, user):
         if self.status == 'open':
@@ -118,7 +121,7 @@ Comments:
             self.id = max_id + 1
         super().save(*args, **kwargs)
 
-class JobAttachment(models.Model):
+class JobAttachment(SharedMemoryModel):
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     object = models.ForeignKey(ObjectDB, on_delete=models.CASCADE)
     attached_to_arg = models.CharField(max_length=255, null=True, blank=True)  # Stores the template arg if applicable
@@ -126,14 +129,20 @@ class JobAttachment(models.Model):
     def __str__(self):
         return f"Attachment: {self.object.key} to Job #{self.job.job_number} (Arg: {self.attached_to_arg or 'None'})"
 
-class Queue(models.Model):
+    class Meta:
+        app_label = 'jobs'
+
+class Queue(SharedMemoryModel):
     name = models.CharField(max_length=255)
     automatic_assignee = models.ForeignKey("accounts.AccountDB", null=True, blank=True, on_delete=models.SET_NULL, related_name="auto_assigned_queues")
 
     def __str__(self):
         return self.name
 
-class JobTemplate(models.Model):
+    class Meta:
+        app_label = 'jobs'
+
+class JobTemplate(SharedMemoryModel):
     name = models.CharField(max_length=255)
     queue = models.ForeignKey(Queue, on_delete=models.CASCADE)
     close_commands = models.JSONField(default=list)  # Array of templated strings
@@ -141,6 +150,9 @@ class JobTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        app_label = 'jobs'
 
 class ArchivedJob(SharedMemoryModel):
     original_id = models.IntegerField()
@@ -167,3 +179,4 @@ class ArchivedJob(SharedMemoryModel):
 
     class Meta:
         ordering = ['archive_id']
+        app_label = 'jobs'
